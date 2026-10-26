@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자원안보 진단·평가 지표 AHP 전문가 설문</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-kopubworld@1.0/dotum.min.css">
+<style>
+  :root{
+    --ink:#111; --line:#bfbfbf; --line-dark:#111; --soft:#f2f2f2;
+    --green:#3A7D44; --red:#C0504D; --green-bg:#f1f8f2; --red-bg:#fdf3f3;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#fff;color:var(--ink);
+    font-family:'KoPubWorld Dotum','KoPubWorldDotum','KoPubWorldDotum Medium','KoPubWorld돋움체 Medium','KoPub Dotum','Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+    line-height:1.6;font-size:15px}
+  a{color:var(--ink)}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 16px 80px}
+  header{border-bottom:2px solid var(--line-dark);padding-bottom:12px;margin-bottom:14px}
+  header .org{font-size:13px;margin:0 0 4px}
+  header h1{margin:0;font-size:22px;letter-spacing:-.2px}
+  header h1 small{font-size:13px;font-weight:400;margin-left:8px}
+  .banner{background:var(--soft);border:1px solid var(--line);padding:10px 14px;font-size:13px;margin-bottom:14px}
+  .steps{display:flex;gap:6px;margin:14px 0 20px;flex-wrap:wrap}
+  .steps span{padding:4px 11px;border:1px solid var(--line);font-size:12.5px;background:#fff;white-space:nowrap}
+  .steps span.done{border-color:var(--line-dark)}
+  .steps span.active{background:var(--line-dark);color:#fff;border-color:var(--line-dark)}
+  .steps span.link{cursor:pointer}
+  .steps span.link:hover{border-color:var(--line-dark);background:var(--soft)}
+  .steps span.active.link:hover{background:var(--line-dark);color:#fff}
+  .steps span.sep{border:0;padding:4px 2px;color:var(--line)}
+  .card{border:1px solid var(--line);padding:20px 22px;margin-bottom:16px;background:#fff}
+  h2{font-size:18px;margin:0 0 10px}
+  h3{font-size:15px;margin:18px 0 8px}
+  p{margin:0 0 10px}
+  .note{font-size:13px}
+  .crumb{font-size:13px;margin-bottom:4px}
+  /* 계층구조 */
+  .tree{margin:6px 0 14px;border:1px solid var(--line);padding:12px 14px}
+  .tree-title{font-weight:700;color:#fff;background:var(--line-dark);display:inline-block;padding:3px 12px;font-size:14px;margin-bottom:8px}
+  .lvl{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
+  .lvl .lbl{flex:0 0 110px;font-size:12.5px;font-weight:700;padding-top:5px}
+  .nodes{display:flex;flex-wrap:wrap;gap:6px}
+  .node{border:1px solid var(--line);padding:3px 10px;font-size:13px;background:#fff}
+  .node.area{border-color:var(--line-dark);font-weight:700}
+  /* 표 */
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{padding:7px 10px;border:0;text-align:left;vertical-align:middle}
+  th{font-weight:700;border-bottom:2px solid var(--line-dark)}
+  td.num,th.num{text-align:right;white-space:nowrap}
+  tr.area-row td{background:var(--soft);font-weight:700;padding-top:9px;padding-bottom:9px}
+  td.sub{padding-left:24px}
+  table.legend td:first-child{font-weight:700;width:110px}
+  /* 응답자 정보 */
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fields label{display:block;font-size:13px;margin-bottom:4px}
+  .fields input,.fields select{width:100%;padding:8px 10px;border:1px solid var(--line);font:inherit;font-size:14px;color:var(--ink)}
+  .fields input:focus{outline:none;border-color:var(--line-dark)}
+  /* 쌍대비교 */
+  .pairs{border-top:1px solid var(--line-dark);border-bottom:1px solid var(--line-dark)}
+  .pair{padding:14px 10px;border-bottom:1px solid var(--line);transition:background .2s}
+  .pair:last-child{border-bottom:0}
+  .pair.worst{background:var(--red-bg)}
+  .pair-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:15px;gap:10px}
+  .pair-head .r{text-align:right}
+  .scale{padding:8px 0 2px}
+  .dirs{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+  .btns{display:flex;border:1px solid var(--line)}
+  .btns button{flex:1;height:38px;border:0;background:#fff;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);padding:0}
+  .btns button:hover{background:var(--soft)}
+  .btns button.eq{background:var(--soft);font-weight:700}
+  .btns button.sel{background:var(--line-dark);color:#fff}
+  .pair-msg{font-size:13px;min-height:20px;margin-top:6px}
+  .worst-note{font-size:13px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--red)}
+  /* CR 박스 */
+  .cr-box{padding:12px 16px;margin:16px 0 6px;border:1px solid var(--line);background:#fafafa}
+  .cr-box.ok{border-color:var(--green);background:var(--green-bg)}
+  .cr-box.warn{border-color:var(--line-dark);background:var(--soft)}
+  .cr-box.err{border-color:var(--red);background:var(--red-bg)}
+  .cr-box.slim{margin:10px 0 0}
+  .cr-val{font-weight:700;font-size:15px}
+  .cr-msg{font-size:13px;margin-top:4px}
+  /* 결과 */
+  .bar{height:10px;background:#8fbce6;min-width:2px}   /* 평가영역: 연한 파랑 */
+  .bar.g{background:#cfe2f3}                               /* 세부지표: 더 연한 파랑 */
+  td.barcell{width:30%}
+  pre.json{background:var(--soft);border:1px solid var(--line);padding:12px;font-size:12px;overflow:auto;max-height:360px}
+  /* 버튼 */
+  .nav{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
+  button.primary{background:var(--line-dark);color:#fff;border:1px solid var(--line-dark);padding:10px 22px;font:inherit;font-size:15px;cursor:pointer}
+  button.primary:hover{background:#333}
+  button.primary:disabled{background:#c8c8c8;border-color:#c8c8c8;cursor:not-allowed}
+  button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line-dark);padding:10px 18px;font:inherit;font-size:14px;cursor:pointer}
+  th,td,.pair-head span{word-break:keep-all;overflow-wrap:anywhere}
+  @media (max-width:600px){
+    .wrap{padding:18px 12px 60px}
+    header h1{font-size:19px}
+    header h1 small{display:block;margin:2px 0 0}
+    .fields{grid-template-columns:1fr}
+    .lvl{flex-direction:column;gap:4px}
+    .lvl .lbl{flex:none;padding-top:0}
+    .card{padding:14px}
+    .pair{padding:12px 4px}
+    .btns button{font-size:14px;height:44px}      /* 손가락으로 누르기 편한 높이 */
+    .dirs{font-size:11px}
+    /* 결과표: 막대 열은 숨기고, 숫자 머리글은 줄바꿈 허용 */
+    table{font-size:13px}
+    th,td{padding:6px 5px}
+    td.barcell,th.barcell{display:none}
+    th.num{white-space:normal}
+    td.sub{padding-left:14px}
+    .cr-box{padding:10px 12px}
+    .nav button{padding:10px 16px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="org" id="org"></p>
+    <h1><span id="title"></span><small id="subtitle"></small></h1>
+  </header>
+  <div class="banner" id="testBanner" hidden>
+    <b>테스트 모드</b> — Supabase 주소/키(<code>CONFIG.supabase</code>)가 비어 있어 응답이 전송되지 않습니다. 제출 시 전송될 데이터만 화면에 표시됩니다.
+  </div>
+  <div class="banner" id="connBanner" style="border-color:var(--red);background:var(--red-bg)" hidden></div>
+  <nav class="steps" id="steps"></nav>
+  <main id="main"></main>
+</div>
+
+<script>
+/* =====================================================================
+ *  설정 — 이 블록만 수정하면 설문 내용을 바꿀 수 있습니다
+ * ===================================================================== */
+const CONFIG = {
+  // Supabase 프로젝트 설정 (README 2절). 둘 중 하나라도 비어 있으면 테스트 모드로 동작합니다.
+  supabase: {
+    url: "https://ocigorjuluhoylpnthbi.supabase.co",   // 반드시 https:// 로 시작 (빠뜨려도 자동 보정됨)
+    key: "sb_publishable_nhyra74QzDf3WCkbqZW3LA_sGEd9Tca"   // Project Settings → API Keys 의 publishable 키
+  },
+  table: "ahp_responses",
+
+  crLimit: 0.2,   // 이 값을 초과하면 오류 → 재검토 요청, 다음 단계 진행 불가
+  crWarn:  0.1,   // 이 값을 초과하면 주의 표시 (진행은 가능)
+  showHint: true, // CR 초과 시 가장 어긋난 비교를 붉게 표시
+
+  // 5점 척도. Saaty 척도의 다섯 언어적 등급(1·3·5·7·9)을 씁니다.
+  // 1~5 정수 척도를 원하면 아래 두 줄을 바꾸세요:
+  //   values: [1, 2, 3, 4, 5],
+  //   labels: { 1:"동등하게 중요", 2:"약간 더 중요", 3:"더 중요", 4:"매우 더 중요", 5:"절대적으로 더 중요" }
+  scale: {
+    values: [1, 3, 5, 7, 9],
+    labels: { 1:"동등하게 중요", 3:"약간 더 중요", 5:"더 중요", 7:"매우 더 중요", 9:"절대적으로 더 중요" }
+  },
+
+  organization: "에너지경제연구원 에너지안보정책연구실",
+  title: "자원안보 진단·평가 지표 가중치 산정을 위한 AHP 전문가 설문",
+
+  // 두 개의 독립된 계층. 계층 간(안정성 vs 대응력) 비교는 하지 않습니다.
+  trees: [
+    {
+      id: "A", name: "안정성",
+      desc: "에너지 공급·수요·시스템이 외부 충격 없이 얼마나 안정적으로 유지되는지를 평가하는 지표입니다.",
+      areas: [
+        { name: "공급",
+          items: ["자원자립도", "정치적 안정성", "수입 편향성", "생산 편향성", "국내 공급 인프라 안정성"] },
+        { name: "수요",
+          items: ["수입 안정성", "가격 안정성", "수요산업 규모"] },
+        { name: "시스템",
+          items: ["정보 접근성", "공공정책 및 제도"] }
+      ]
+    },
+    {
+      id: "B", name: "대응력",
+      desc: "공급 차질이나 위기가 발생했을 때 평상시와 비상시에 얼마나 잘 대응할 수 있는지를 평가하는 지표입니다.",
+      areas: [
+        { name: "상시 대응력",
+          items: ["수입원 다변화", "외교 및 국제협력", "자원 R&D", "자원 재활용"] },
+        { name: "비상 대응력",
+          items: ["자원개발률", "비축물량", "위기대응 숙련도"] },
+        { name: "인프라",
+          items: ["비상대응 시스템", "인적자원 공급"] }
+      ]
+    }
+  ]
+};
+
+/* =====================================================================
+ *  AHP 계산 (Saaty 고유벡터법)
+ * ===================================================================== */
+// === AHP MATH START ===
+const RI = {1:0, 2:0, 3:0.58, 4:0.90, 5:1.12, 6:1.24, 7:1.32, 8:1.41, 9:1.45, 10:1.49,
+            11:1.51, 12:1.48, 13:1.56, 14:1.57, 15:1.59};
+
+function pairsOf(n){
+  const p = [];
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) p.push([i, j]);
+  return p;
+}
+
+// judgments: { "i-j": a_ij }  (a_ij = 왼쪽/오른쪽 중요도 비율)
+function buildMatrix(n, judgments){
+  const A = Array.from({length: n}, () => Array(n).fill(1));
+  for (const [i, j] of pairsOf(n)){
+    const a = judgments[i + "-" + j];
+    if (a == null) return null;
+    A[i][j] = a; A[j][i] = 1 / a;
+  }
+  return A;
+}
+
+// 거듭제곱법으로 주고유벡터·λmax 계산
+function priorityVector(A){
+  const n = A.length;
+  let w = Array(n).fill(1 / n);
+  for (let it = 0; it < 200; it++){
+    const Aw = A.map(r => r.reduce((s, a, j) => s + a * w[j], 0));
+    const sum = Aw.reduce((a, b) => a + b, 0);
+    const w2 = Aw.map(v => v / sum);
+    const diff = Math.max(...w2.map((v, i) => Math.abs(v - w[i])));
+    w = w2;
+    if (diff < 1e-12) break;
+  }
+  const Aw = A.map(r => r.reduce((s, a, j) => s + a * w[j], 0));
+  const lmax = Aw.reduce((s, v, i) => s + v / w[i], 0) / n;
+  return { w, lmax };
+}
+
+function consistency(A){
+  const n = A.length;
+  const { w, lmax } = priorityVector(A);
+  const CI = n > 2 ? (lmax - n) / (n - 1) : 0;
+  const ri = RI[n] || 1.59;
+  const CR = n > 2 ? CI / ri : 0;
+  return { w, lmax, CI, CR };
+}
+
+// 가중치로부터 추정되는 비율과 가장 크게 어긋난 쌍
+function worstPair(A, w){
+  let worst = null, maxDev = -1;
+  for (const [i, j] of pairsOf(A.length)){
+    const dev = Math.abs(Math.log(A[i][j]) - Math.log(w[i] / w[j]));
+    if (dev > maxDev){ maxDev = dev; worst = [i, j]; }
+  }
+  return { pair: worst, dev: maxDev };
+}
+// === AHP MATH END ===
+
+/* =====================================================================
+ *  계층 → 비교 단계(섹션) 전개
+ * ===================================================================== */
+const SECTIONS = [];
+for (const t of CONFIG.trees){
+  SECTIONS.push({
+    id: t.id + "0", tree: t.id, treeName: t.name, level: "area", parent: null,
+    title: `${t.name} 평가영역 간 상대적 중요도`, short: `${t.name} 영역`,
+    desc: `${t.name} 지표를 구성하는 아래 ${t.areas.length}개 평가영역 중 어느 것이 얼마나 더 중요하다고 보십니까?`,
+    items: t.areas.map(a => a.name), qualitative: []
+  });
+  t.areas.forEach((a, k) => SECTIONS.push({
+    id: `${t.id}${k + 1}`, tree: t.id, treeName: t.name, level: "item", parent: a.name,
+    title: `'${a.name}' 영역 세부지표 간 상대적 중요도`, short: a.name,
+    desc: `${t.name} › ${a.name} 영역을 구성하는 아래 ${a.items.length}개 세부지표 중 어느 것이 얼마나 더 중요하다고 보십니까?`,
+    items: a.items.slice(), qualitative: (a.qualitative || []).slice()
+  }));
+}
+const N_STEPS = SECTIONS.length;          // 비교 단계 수
+const SCALE = CONFIG.scale.values.slice().sort((a, b) => a - b);
+const LABEL = CONFIG.scale.labels;
+
+/* =====================================================================
+ *  상태
+ * ===================================================================== */
+const state = {
+  step: 0,
+  answers: {},            // answers[secId]["i-j"] = {side:'L'|'E'|'R', val}
+  respondent: {},
+  startedAt: Date.now(),
+  submissionId: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+};
+SECTIONS.forEach(s => state.answers[s.id] = {});
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ratioOf = a => a.side === "L" ? a.val : a.side === "R" ? 1 / a.val : 1;
+const round = (x, d) => Math.round(x * 10 ** d) / 10 ** d;
+const secById = id => SECTIONS.find(s => s.id === id);
+const itemLabel = (sec, name) => esc(name);
+
+function sectionResult(sec){
+  const n = sec.items.length, J = {};
+  for (const [i, j] of pairsOf(n)){
+    const a = state.answers[sec.id][i + "-" + j];
+    if (!a) return null;
+    J[i + "-" + j] = ratioOf(a);
+  }
+  const A = buildMatrix(n, J);
+  const c = consistency(A);
+  return { A, ...c, worst: worstPair(A, c.w) };
+}
+
+function sectionOK(sec){
+  const r = sectionResult(sec);
+  return !!r && r.CR <= CONFIG.crLimit;
+}
+
+/* =====================================================================
+ *  렌더링
+ * ===================================================================== */
+// 지금까지 완료한 범위 안에서 갈 수 있는 가장 먼 단계 (제출 후에는 이동 불가)
+function maxReachable(){
+  if (state.submitted) return -1;
+  for (let k = 1; k <= N_STEPS; k++) if (!sectionOK(SECTIONS[k - 1])) return k;
+  return N_STEPS + 1;
+}
+
+function renderSteps(){
+  const reach = maxReachable();
+  const chip = (i, label) => {
+    const cls = [i === state.step ? "active" : i < state.step ? "done" : "", i <= reach ? "link" : ""].join(" ").trim();
+    const on = i <= reach ? ` onclick="go(${i})" title="이 단계로 이동"` : "";
+    return `<span class="${cls}"${on}>${label}</span>`;
+  };
+  let html = chip(0, "안내");
+  let idx = 1;
+  for (const t of CONFIG.trees){
+    html += `<span class="sep">|</span>`;
+    const n = 1 + t.areas.length;
+    for (let k = 0; k < n; k++, idx++){
+      const label = k === 0 ? `${t.name} 영역` : t.areas[k - 1].name;
+      html += chip(idx, `${idx}. ${esc(label)}`);
+    }
+  }
+  html += `<span class="sep">|</span>` + chip(N_STEPS + 1, "결과·제출");
+  $("#steps").innerHTML = html;
+}
+
+function treeHTML(t){
+  const areaSec = secById(t.id + "0");
+  let html = `<div class="tree"><div class="tree-title">${esc(t.name)}</div>
+    <div class="lvl"><span class="lbl">평가영역</span><div class="nodes">${t.areas.map(a =>
+      `<div class="node area">${esc(a.name)}</div>`).join("")}</div></div>`;
+  t.areas.forEach(a => {
+    html += `<div class="lvl"><span class="lbl">${esc(a.name)}</span><div class="nodes">${a.items.map(i =>
+      `<div class="node">${esc(i)}</div>`).join("")}</div></div>`;
+  });
+  return html + `</div>`;
+}
+
+function renderIntro(){
+  const totalPairs = SECTIONS.reduce((s, sec) => s + pairsOf(sec.items.length).length, 0);
+  const r = state.respondent;
+  const scaleRows = SCALE.map(v => `<tr><td>${v}</td><td>${esc(LABEL[v] || "")}</td></tr>`).join("");
+  return `
+  <section class="card">
+    <h2>설문 안내</h2>
+    <p>본 설문은 계층분석법(AHP)을 이용하여 자원안보 진단·평가 지표의 가중치를 산정하기 위한 전문가 설문입니다.
+       지표는 <b>안정성</b>과 <b>대응력</b> 두 개의 독립된 체계로 구성되며, 두 체계 간 비교는 하지 않습니다.
+       각 체계 안에서 ① 평가영역 간, ② 영역별 세부지표 간 상대적 중요도를 쌍대비교 방식으로 여쭙습니다. 비교 쌍은 총 ${totalPairs}개(${N_STEPS}단계)입니다.</p>
+    <p> 문의: 에너지경제연구원 에너지안보정책연구실 박종은 부연구위원(jongeun@keei.re.kr)
+    <h3>평가 계층구조</h3>
+    ${CONFIG.trees.map(treeHTML).join("")}
+  </section>
+  <section class="card">
+    <h2>척도 안내</h2>
+    <table>
+      <thead><tr><th style="width:110px">척도</th><th>의미</th></tr></thead>
+      <tbody>${scaleRows}</tbody>
+    </table>
+    <p class="note" style="margin-top:10px">각 단계의 응답이 끝나면 일관성 비율(CR)이 자동 계산됩니다.
+       CR이 <b>${CONFIG.crLimit}</b>를 초과하면 응답을 다시 검토하도록 안내되며, 수정 전에는 다음 단계로 진행할 수 없습니다.</p>
+  </section>
+  <section class="card">
+    <h2>응답자 정보</h2>
+    <div class="fields">
+      <div><label for="affiliation">소속</label><input id="affiliation" type="text" value="${esc(r.affiliation || "")}" placeholder="예: ○○대학교" autocomplete="organization"></div>
+      <div><label for="name">이름</label><input id="name" type="text" value="${esc(r.name || "")}" placeholder="예: 홍길동" autocomplete="name"></div>
+    </div>
+    <div id="respMsg"></div>
+    <div class="nav"><span></span><button class="primary" onclick="go(1)">설문 시작</button></div>
+  </section>`;
+}
+
+function pairMsg(sec, i, j, a){
+  if (a.side === "E") return `두 항목이 ${esc(LABEL[1] || "동등")} (1)`;
+  const [m, o] = a.side === "L" ? [sec.items[i], sec.items[j]] : [sec.items[j], sec.items[i]];
+  return `<b>${esc(m)}</b>이(가) ${esc(o)}보다 ${esc(LABEL[a.val] || "")} (${a.val})`;
+}
+
+function pairHTML(sec, i, j){
+  const key = i + "-" + j, a = state.answers[sec.id][key];
+  const btn = (side, v) =>
+    `<button type="button" class="${side === "E" ? "eq" : ""} ${a && a.side === side && a.val === v ? "sel" : ""}"
+       onclick="pick('${sec.id}','${key}','${side}',${v})" title="${esc(LABEL[v] || "")}">${v}</button>`;
+  let btns = "";
+  for (const v of SCALE.slice(1).reverse()) btns += btn("L", v);
+  btns += btn("E", 1);
+  for (const v of SCALE.slice(1)) btns += btn("R", v);
+  return `<div class="pair ${a ? "answered" : ""}" id="pair-${sec.id}-${key}">
+    <div class="pair-head"><span class="l">${itemLabel(sec, sec.items[i])}</span><span class="r">${itemLabel(sec, sec.items[j])}</span></div>
+    <div class="scale">
+      <div class="dirs"><span>◀ 왼쪽이 더 중요</span><span>동등</span><span>오른쪽이 더 중요 ▶</span></div>
+      <div class="btns">${btns}</div>
+    </div>
+    <div class="pair-msg">${a ? pairMsg(sec, i, j, a) : ""}</div>
+  </div>`;
+}
+
+function renderSection(k){
+  const sec = SECTIONS[k - 1];
+  const pairs = pairsOf(sec.items.length);
+  const crumb = sec.level === "area"
+    ? `<b>${esc(sec.treeName)}</b> › 평가영역 비교`
+    : `<b>${esc(sec.treeName)}</b> › ${esc(sec.parent)} › 세부지표 비교`;
+  return `<section class="card">
+    <div class="crumb">${crumb}</div>
+    <h2>${k}단계. ${esc(sec.title)}</h2>
+    <p>${esc(sec.desc)}</p>
+    <p class="note">총 ${pairs.length}개 쌍을 비교합니다. 왼쪽 항목이 더 중요하면 왼쪽 숫자를, 오른쪽 항목이 더 중요하면 오른쪽 숫자를 선택하세요.</p>
+    <div id="pairs" class="pairs">${pairs.map(([i, j]) => pairHTML(sec, i, j)).join("")}</div>
+    <div class="cr-box" id="crbox"></div>
+    <div class="nav">
+      <button class="ghost" onclick="go(${k - 1})">이전</button>
+      <button class="primary" id="nextBtn" disabled onclick="go(${k + 1})">${k === N_STEPS ? "결과 확인" : "다음"}</button>
+    </div>
+  </section>`;
+}
+
+// 전체 결과: 영역 가중치 × 세부지표 가중치 = 종합 가중치
+function computeAll(){
+  const res = {}; SECTIONS.forEach(s => res[s.id] = sectionResult(s));
+  const rows = [];
+  for (const t of CONFIG.trees){
+    const areaSec = secById(t.id + "0"), ar = res[areaSec.id];
+    t.areas.forEach((a, k) => {
+      const aw = ar.w[k];
+      rows.push({ tree: t.id, tree_name: t.name, level: "area", section_id: areaSec.id, area: a.name, item: a.name,
+                  qualitative: false, local_w: aw, global_w: aw, cr: ar.CR });
+      const sec = secById(`${t.id}${k + 1}`), r = res[sec.id];
+      sec.items.forEach((it, i) => rows.push({
+        tree: t.id, tree_name: t.name, level: "item", section_id: sec.id, area: a.name, item: it,
+        qualitative: sec.qualitative.includes(it), local_w: r.w[i], global_w: aw * r.w[i], cr: r.CR
+      }));
+    });
+  }
+  return { res, rows };
+}
+
+function renderResults(){
+  for (let k = 1; k <= N_STEPS; k++){
+    if (!sectionOK(SECTIONS[k - 1])){ state.step = k; render(); return ""; }
+  }
+  const { res, rows } = computeAll();
+  const pct = x => (x * 100).toFixed(1) + "%";
+  const crCls = cr => cr > CONFIG.crLimit ? "err" : cr > CONFIG.crWarn ? "warn" : "ok";
+  const blocks = CONFIG.trees.map(t => {
+    const areaSec = secById(t.id + "0");
+    let body = "";
+    t.areas.forEach((a, k) => {
+      const sec = secById(`${t.id}${k + 1}`), r = res[sec.id], aw = res[areaSec.id].w[k];
+      body += `<tr class="area-row"><td>${esc(a.name)}</td><td class="num">${pct(aw)}</td><td class="num">${pct(aw)}</td><td class="barcell"><div class="bar" style="width:${pct(aw)}"></div></td><td class="num">${r.CR.toFixed(3)}</td></tr>`;
+      rows.filter(x => x.tree === t.id && x.level === "item" && x.area === a.name).forEach(x => {
+        body += `<tr><td class="sub">${esc(x.item)}</td><td class="num">${pct(x.local_w)}</td><td class="num">${pct(x.global_w)}</td><td class="barcell"><div class="bar g" style="width:${pct(x.global_w)}"></div></td><td></td></tr>`;
+      });
+    });
+    return `<section class="card"><h2>${esc(t.name)}</h2>
+      <table><thead><tr><th>평가영역 / 세부지표</th><th class="num">영역 내 가중치</th><th class="num">종합 가중치</th><th class="barcell"></th><th class="num">세부지표 CR</th></tr></thead><tbody>${body}</tbody></table>
+      <div class="cr-box ${crCls(res[areaSec.id].CR)} slim"><div class="cr-val">평가영역 비교 CR = ${res[areaSec.id].CR.toFixed(3)}</div>
+        <div class="cr-msg">종합 가중치 = 평가영역 가중치 × 영역 내 세부지표 가중치. ${esc(t.name)} 체계 안에서 세부지표 종합 가중치의 합은 100%입니다.</div></div>
+      </section>`;
+  }).join("");
+  const testNote = isTestMode() ? `<p class="note">테스트 모드: Supabase 설정이 비어 있어 응답이 전송되지 않습니다. 제출을 누르면 전송될 데이터가 화면에 표시됩니다.</p>` : "";
+  return `${blocks}
+  <section class="card">
+    <h2>제출</h2>
+    <p>위 가중치는 응답하신 쌍대비교로부터 산출된 값입니다. 확인 후 제출해 주세요.</p>
+    ${testNote}
+    <div class="nav">
+      <button class="ghost" onclick="go(${N_STEPS})">이전</button>
+      <button class="primary" id="submitBtn" onclick="submitAll()">제출</button>
+    </div>
+    <div id="submitMsg"></div>
+  </section>`;
+}
+
+function renderDone(res){
+  $("#main").innerHTML = `<section class="card">
+    <h2>${res.test ? "테스트 완료" : "제출 완료"}</h2>
+    <p>${res.test
+      ? "테스트 모드이므로 실제 전송은 하지 않았습니다. 아래는 Supabase 테이블에 한 행으로 기록될 데이터입니다."
+      : "응답해 주셔서 감사합니다. 응답이 정상적으로 기록되었습니다."}</p>
+    ${res.duplicate ? `<p class="note">이미 기록된 응답이라 중복 저장하지 않았습니다.</p>` : ""}
+    ${res.test ? `<pre class="json">${esc(JSON.stringify(res.payload, null, 2))}</pre>
+                  <button class="ghost" onclick="downloadJSON()">JSON 내려받기</button>` : ""}
+  </section>`;
+  state.step = N_STEPS + 2;
+  state.submitted = true;
+  renderSteps();
+}
+
+function render(){
+  renderSteps();
+  const m = $("#main"), k = state.step;
+  if (k === 0) m.innerHTML = renderIntro();
+  else if (k <= N_STEPS){ m.innerHTML = renderSection(k); updateCR(SECTIONS[k - 1]); }
+  else m.innerHTML = renderResults();
+}
+
+/* =====================================================================
+ *  상호작용
+ * ===================================================================== */
+function readRespondent(){
+  const g = id => document.getElementById(id);
+  if (!g("affiliation")) return true;
+  state.respondent = { affiliation: g("affiliation").value.trim(), name: g("name").value.trim() };
+  const missing = [!state.respondent.affiliation && "소속", !state.respondent.name && "이름"].filter(Boolean);
+  const msg = g("respMsg");
+  if (missing.length){
+    msg.innerHTML = `<div class="cr-box err slim"><div class="cr-msg">${missing.join("과 ")}을(를) 입력해 주세요.</div></div>`;
+    g(missing[0] === "소속" ? "affiliation" : "name").focus();
+    return false;
+  }
+  msg.innerHTML = "";
+  return true;
+}
+
+function go(step){
+  if (state.submitted) return;
+  if (state.step === 0 && step > 0 && !readRespondent()) return;
+  for (let k = 1; k < step && k <= N_STEPS; k++){      // 미완료 단계 건너뛰기 방지
+    if (!sectionOK(SECTIONS[k - 1])){ step = k; break; }
+  }
+  state.step = step;
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function pick(secId, key, side, val){
+  state.answers[secId][key] = { side, val };
+  const sec = secById(secId);
+  const [i, j] = key.split("-").map(Number);
+  document.getElementById(`pair-${secId}-${key}`).outerHTML = pairHTML(sec, i, j);
+  updateCR(sec);
+}
+
+function updateCR(sec){
+  const box = $("#crbox"), next = $("#nextBtn");
+  if (!box) return;
+  document.querySelectorAll(".pair.worst").forEach(e => e.classList.remove("worst"));
+  document.querySelectorAll(".worst-note").forEach(e => e.remove());
+
+  const total = pairsOf(sec.items.length).length;
+  const done = Object.keys(state.answers[sec.id]).length;
+  const r = sectionResult(sec);
+
+  if (!r){
+    box.className = "cr-box";
+    box.innerHTML = `<div class="cr-val">일관성 비율(CR): –</div>
+      <div class="cr-msg">${done} / ${total} 쌍 응답 완료. 모든 쌍을 응답하면 자동으로 계산됩니다.</div>`;
+    next.disabled = true;
+    return;
+  }
+  if (sec.items.length < 3){
+    box.className = "cr-box ok";
+    box.innerHTML = `<div class="cr-val">✓ 응답 완료</div>
+      <div class="cr-msg">항목이 2개인 비교는 일관성 검증 대상이 아닙니다. 다음 단계로 진행해 주세요.</div>`;
+    next.disabled = false;
+    return;
+  }
+
+  const cr = r.CR;
+  if (cr > CONFIG.crLimit){
+    box.className = "cr-box err";
+    box.innerHTML = `<div class="cr-val">⚠ 일관성 비율(CR) = ${cr.toFixed(3)} — 기준치 ${CONFIG.crLimit} 초과</div>
+      <div class="cr-msg">응답 간 논리적 일관성이 낮습니다 (예: A &gt; B, B &gt; C인데 C &gt; A).
+        ${CONFIG.showHint ? "붉게 표시된 비교를 중심으로" : "각 비교를"} 다시 검토해 주세요.
+        CR이 ${CONFIG.crLimit} 이하가 되어야 다음 단계로 진행할 수 있습니다.</div>`;
+    next.disabled = true;
+    if (CONFIG.showHint && r.worst.pair){
+      const [i, j] = r.worst.pair;
+      const pe = document.getElementById(`pair-${sec.id}-${i}-${j}`);
+      pe.classList.add("worst");
+      pe.insertAdjacentHTML("beforeend",
+        `<div class="worst-note">이 비교가 다른 응답들과 가장 크게 어긋납니다.</div>`);
+    }
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+  } else if (cr > CONFIG.crWarn){
+    box.className = "cr-box warn";
+    box.innerHTML = `<div class="cr-val">일관성 비율(CR) = ${cr.toFixed(3)}</div>
+      <div class="cr-msg">허용범위(≤ ${CONFIG.crLimit}) 안에 있으나 일반적 기준(0.1)보다는 높습니다.
+        가능하면 한 번 더 검토해 주세요. 다음 단계로 진행할 수 있습니다.</div>`;
+    next.disabled = false;
+  } else {
+    box.className = "cr-box ok";
+    box.innerHTML = `<div class="cr-val">✓ 일관성 비율(CR) = ${cr.toFixed(3)}</div>
+      <div class="cr-msg">응답의 일관성이 양호합니다. 다음 단계로 진행해 주세요.</div>`;
+    next.disabled = false;
+  }
+}
+
+/* =====================================================================
+ *  전송 (Supabase REST)
+ * ===================================================================== */
+function isTestMode(){ return !(CONFIG.supabase.url && CONFIG.supabase.key); }
+
+// URL 정리: 앞뒤 공백 제거, https:// 누락 보정, 끝의 / 나 /rest/v1 제거
+function baseUrl(){
+  let u = String(CONFIG.supabase.url || "").trim();
+  if (u && !/^https?:\/\//i.test(u)) u = "https://" + u;
+  u = u.replace(/\/rest\/v1\/?$/i, "").replace(/\/+$/, "");
+  return u;
+}
+function restUrl(){ return baseUrl() + "/rest/v1/"; }
+function apiKey(){ return String(CONFIG.supabase.key || "").trim(); }
+
+// 키 전달 방식 두 가지:
+//   header — 표준 방식. apikey 헤더에 키를 넣음
+//   query  — 일부 기관 네트워크가 apikey 헤더를 제거하는 경우를 위한 우회. 주소 뒤에 ?apikey=… 로 넣음
+function withKey(url){ return url + (url.includes("?") ? "&" : "?") + "apikey=" + encodeURIComponent(apiKey()); }
+function keyedUrl(url, mode){ return mode === "query" ? withKey(url) : url; }
+function keyedHeaders(mode, extra){ return Object.assign(mode === "query" ? {} : { "apikey": apiKey() }, extra || {}); }
+
+async function readDetail(res){
+  try { const j = await res.json(); return j.message || j.hint || JSON.stringify(j); } catch (_) { return ""; }
+}
+
+// 점검 주소: 응답 테이블 자체. (/rest/v1/ 루트는 publishable 키로 열 수 없음)
+function probeUrl(){ return restUrl() + CONFIG.table + "?select=submission_id&limit=1"; }
+
+async function probe(mode){
+  const res = await fetch(keyedUrl(probeUrl(), mode), { headers: keyedHeaders(mode) });
+  if (res.ok) return { ok: true, status: res.status, detail: "" };
+  const detail = await readDetail(res);
+  // 익명 키는 삽입만 허용되어 조회는 거부되지만, 이 거부는 데이터베이스까지 도달했다는 뜻 → 키·주소·네트워크 모두 정상
+  if ((res.status === 401 || res.status === 403) && /permission denied|42501/i.test(detail))
+    return { ok: true, status: res.status, detail };
+  return { ok: false, status: res.status, detail };
+}
+
+// 페이지를 열 때 Supabase 연결을 미리 확인 (30쌍을 다 응답한 뒤에 실패하지 않도록)
+async function checkConnection(){
+  const el = $("#connBanner");
+  if (isTestMode()) return;
+  let a = null, b = null;
+  try {
+    a = await probe("header");
+    if (a.ok){ state.keyMode = "header"; return; }
+    b = await probe("query");
+    if (b.ok){ state.keyMode = "query"; console.info("apikey 헤더가 차단되어 주소 방식으로 전송합니다."); return; }
+  } catch (e) {
+    el.hidden = false;
+    el.innerHTML = `<b>연결 불가</b> — 응답 저장 서버(<code>${esc(restUrl())}</code>)에 접속할 수 없습니다.
+      주소가 정확한지, 또는 현재 네트워크(기관 방화벽 등)가 supabase.co 접속을 막고 있지 않은지 확인해 주세요.
+      이 상태로도 설문은 진행할 수 있으며, 제출 시 응답 파일을 내려받아 담당자에게 보낼 수 있습니다.`;
+    return;
+  }
+  const fmt = p => `HTTP ${p.status}${p.detail ? " " + esc(p.detail) : ""}`;
+  el.hidden = false;
+  el.innerHTML = `<b>설정 오류</b> — 응답 저장 서버 주소는 열리지만 키가 거부되었습니다.
+    헤더 방식: ${fmt(a)} / 주소 방식: ${fmt(b)}.<br>
+    <a href="${esc(withKey(probeUrl()))}" target="_blank" rel="noopener">이 링크</a>를 새 탭에서 열었을 때
+    “permission denied for table …”이 보이면 키는 정상이고 네트워크 문제이며, “Invalid API key”가 보이면
+    프로젝트 <code>${esc(baseUrl().replace(/^https?:\/\//, "").split(".")[0])}</code>의 Settings → API Keys에서 키를 다시 확인해야 합니다.
+    “Could not find the table”이 보이면 supabase.sql이 이 프로젝트에서 실행되지 않은 것입니다.`;
+}
+
+function buildPayload(){
+  const { res, rows } = computeAll();
+  const cr = {}; SECTIONS.forEach(s => cr[s.id] = round(res[s.id].CR, 4));
+  const judgments = [];
+  for (const s of SECTIONS){
+    const r = res[s.id];
+    for (const [i, j] of pairsOf(s.items.length)){
+      const a = state.answers[s.id][i + "-" + j];
+      judgments.push({ tree: s.tree, section_id: s.id, section: s.short, left_item: s.items[i], right_item: s.items[j],
+                       value: round(r.A[i][j], 4), choice: a.side === "E" ? "1" : a.side + a.val });
+    }
+  }
+  return {
+    submission_id: state.submissionId,
+    submitted_at: new Date().toISOString(),
+    affiliation: state.respondent.affiliation || "",
+    name: state.respondent.name || "",
+    duration_sec: Math.round((Date.now() - state.startedAt) / 1000),
+    user_agent: navigator.userAgent,
+    scale: SCALE.join(","),
+    cr,
+    weights: rows.map(x => ({ ...x, local_w: round(x.local_w, 5), global_w: round(x.global_w, 5), cr: round(x.cr, 4) })),
+    judgments,
+    answers: state.answers
+  };
+}
+
+async function postRow(row, mode){
+  const url = keyedUrl(restUrl() + CONFIG.table, mode);
+  const res = await fetch(url, {
+    method: "POST",
+    headers: keyedHeaders(mode, { "Content-Type": "application/json", "Prefer": "return=minimal" }),
+    body: JSON.stringify(row)
+  });
+  if (res.ok) return { ok: true, mode };
+  if (res.status === 409) return { ok: true, duplicate: true, mode };   // 같은 submission_id 재전송
+  const detail = await readDetail(res);
+  const hint = res.status === 401 || res.status === 403 ? " (키 또는 삽입 권한 정책 문제)"
+             : res.status === 404 ? " (주소 또는 테이블 이름 문제)" : "";
+  return { ok: false, status: res.status, error: `HTTP ${res.status} ${detail}${hint}` };
+}
+
+async function sendToSupabase(row){
+  // 사전 점검에서 정해진 방식을 먼저 쓰고, 키 거부(401/403)면 다른 방식으로 한 번 더 시도
+  const modes = state.keyMode === "query" ? ["query", "header"] : ["header", "query"];
+  let last = null;
+  for (const mode of modes){
+    try {
+      const r = await postRow(row, mode);
+      if (r.ok){ state.keyMode = mode; return r; }
+      last = r;
+      if (!(r.status === 401 || r.status === 403)) break;   // 키 문제가 아니면 재시도 의미 없음
+    } catch (e) {
+      return { ok: false, error: `${e.message || e} — 요청 주소: ${restUrl() + CONFIG.table}. 주소가 열리지 않거나 네트워크가 차단된 상태입니다.` };
+    }
+  }
+  return last;
+}
+
+async function submitAll(){
+  const btn = $("#submitBtn"), msg = $("#submitMsg");
+  btn.disabled = true; btn.textContent = "전송 중…";
+  const payload = buildPayload();
+  state.lastPayload = payload;
+  if (isTestMode()){ renderDone({ ok: true, test: true, payload }); return; }
+  const res = await sendToSupabase(payload);
+  if (res.ok){ renderDone({ ...res, payload }); return; }
+  btn.disabled = false; btn.textContent = "다시 제출";
+  msg.innerHTML = `<div class="cr-box err"><div class="cr-val">전송에 실패했습니다</div>
+    <div class="cr-msg">${esc(res.error)}<br>네트워크를 확인한 뒤 다시 시도해 주세요. 반복되면
+    <a href="#" onclick="downloadJSON();return false;">응답 파일을 내려받아</a> 설문 담당자에게 보내 주세요.</div></div>`;
+}
+
+function downloadJSON(){
+  const payload = state.lastPayload || buildPayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `ahp_${payload.submission_id}.json`;
+  a.click();
+}
+
+/* =====================================================================
+ *  시작
+ * ===================================================================== */
+$("#org").textContent = CONFIG.organization;
+$("#title").textContent = CONFIG.title;
+$("#subtitle").textContent = CONFIG.subtitle;
+$("#testBanner").hidden = !isTestMode();
+render();
+checkConnection();
+</script>
+</body>
+</html>
