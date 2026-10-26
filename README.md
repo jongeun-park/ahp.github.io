@@ -3,7 +3,7 @@
 에너지경제연구원 에너지안보정책연구실. GitHub Pages(설문 화면) + Supabase(응답 저장) 조합으로, 별도 서버 없이 동작합니다.
 
 ```
-응답자 브라우저 ── main.html (GitHub Pages)
+응답자 브라우저 ── index.html (GitHub Pages)
       │   쌍대비교 · CR 계산 · 가중치 산출은 모두 브라우저에서
       │   제출 시 JSON 한 건을 전송 (publishable 키, 행 추가 권한만)
       ▼
@@ -16,7 +16,7 @@ Supabase 프로젝트 KEEI (도쿄 리전)
 
 | 파일 | 역할 |
 |---|---|
-| `main.html` | 설문 페이지 전체. 설정·계산·화면·전송이 한 파일. GitHub에 올리는 것은 이것뿐 |
+| `index.html` | 설문 페이지 전체. 설정·계산·화면·전송이 한 파일. GitHub에 올리는 것은 이것뿐 |
 | `supabase.sql` | 테이블·권한·뷰 생성. **새 프로젝트를 처음부터 만들 때**만 실행 |
 | `supabase_update.sql` | 응답자 정보를 소속·이름으로 바꾼 변경분. 현재 KEEI 프로젝트에는 이미 적용됨 |
 | `README.md` | 이 문서 |
@@ -38,17 +38,18 @@ Supabase 프로젝트 KEEI (도쿄 리전)
 
 총 30쌍, 약 12분.
 
-- **척도**: 5점. Saaty 척도의 다섯 언어적 등급(1 동등 · 3 약간 · 5 더 · 7 매우 · 9 절대적으로)을 씁니다. 1~5 정수 척도로 바꾸는 방법은 `main.html`의 `CONFIG.scale` 주석에 있습니다.
-- **일관성 검증**: 항목이 3개 이상인 단계는 응답 완료 즉시 고유벡터법으로 CR을 계산합니다. **CR > 0.2 → 오류 표시 + 다음 단계 잠금**, 0.1 < CR ≤ 0.2 → 주의 표시(진행 가능), 항목 2개인 단계(4·8)는 검증 대상 아님. 오류 시 가장 어긋나는 쌍을 붉은 바탕으로 표시만 하고, 어느 값으로 고치라는 안내는 하지 않습니다.
+- **척도**: 5점. Saaty 척도의 다섯 언어적 등급(1 동등 · 3 약간 · 5 더 · 7 매우 · 9 절대적으로)을 씁니다. 1~5 정수 척도로 바꾸는 방법은 `index.html`의 `CONFIG.scale` 주석에 있습니다.
+- **일관성 검증**: 항목이 3개 이상인 단계는 응답 완료 즉시 고유벡터법으로 CR을 계산합니다. **CR > 0.2 → 오류 표시, 그 단계는 미완료로 유지**(수정해야 ✓), 0.1 < CR ≤ 0.2 → 주의 표시(완료 처리), 항목 2개인 단계(4·8)는 검증 대상 아님. 오류 시 가장 어긋나는 쌍을 붉은 바탕으로 표시만 하고, 어느 값으로 고치라는 안내는 하지 않습니다.
 - **응답자 정보**: 소속과 이름. 둘 다 입력해야 시작됩니다.
-- **단계 이동**: 상단의 단계 이름을 누르면 완료한 단계로 돌아가 수정할 수 있습니다. 미완료 단계는 건너뛸 수 없고, 제출 후에는 이동이 막힙니다.
+- **단계 이동**: 8개 단계는 원하는 순서로 응답할 수 있습니다. 상단의 단계 이름을 누르면 어느 단계로든 이동하고, 완료된 단계(모든 쌍 응답 + CR ≤ 0.2)에는 ✓가 붙습니다. 결과·제출은 모든 단계가 완료되어야 열리며, 제출 후에는 이동이 막힙니다.
+- **계층도**: 각 단계 상단에 지표 계층도를 그려 비교 중인 지표를 강조하고, 평가영역 비교 단계(1·5)에는 영역 정의를 함께 표시합니다. 그림은 설정의 지표 이름에서 자동 생성됩니다.
 - **결과 화면**: 영역 가중치 × 영역 내 가중치 = 종합 가중치를 표로 보여준 뒤 제출. 계층별 세부지표 종합 가중치 합 = 100%.
 - **화면**: 검정 글씨, 각진 모서리, KoPubWorld 돋움(CDN 웹폰트, 미설치 PC에서도 동일). PC·모바일 모두 대응.
 
 ## 3. 현재 설정 상태
 
 - Supabase 프로젝트: **KEEI** (`https://ocigorjuluhoylpnthbi.supabase.co`, Northeast Asia/Tokyo, 무료 플랜)
-- `main.html`의 `CONFIG.supabase`에 Project URL과 publishable 키가 입력되어 있음
+- `index.html`의 `CONFIG.supabase`에 Project URL과 publishable 키가 입력되어 있음
 - 테이블 `ahp_responses`와 뷰 4개 생성 완료 (`supabase.sql` + `supabase_update.sql` 적용 상태)
 
 페이지를 열면 자동으로 연결을 점검합니다. 상단에 아무 띠도 뜨지 않으면 정상, 붉은 띠가 뜨면 6절(문제 해결)을 보세요. `CONFIG.supabase`가 비어 있으면 **테스트 모드**로 동작해 전송 대신 저장될 데이터를 화면에 보여줍니다.
@@ -56,9 +57,9 @@ Supabase 프로젝트 KEEI (도쿄 리전)
 ## 4. GitHub Pages 배포
 
 1. GitHub **New repository** → 이름 예: `ahp-survey`, Public → Create
-2. **Add file → Upload files** → `main.html` 업로드 (저장소 루트) → Commit changes
+2. **Add file → Upload files** → `index.html` 업로드 (저장소 루트) → Commit changes
 3. 저장소 **Settings → Pages** → Source: *Deploy from a branch* → Branch: **main**, 폴더: **/ (root)** → Save
-4. 1~2분 뒤 접속 주소: `https://<계정명>.github.io/ahp-survey/main.html`
+4. 1~2분 뒤 접속 주소: `https://<계정명>.github.io/ahp-survey/index.html`
 
 파일 이름을 `index.html`로 바꿔 올리면 `https://<계정명>.github.io/ahp-survey/` 처럼 짧은 주소로 열립니다. 파일 내용은 그대로 두고 이름만 바꾸면 됩니다.
 
@@ -148,7 +149,7 @@ GitHub Pages에 올리면 페이지 소스가 공개되므로 Project URL과 pub
 
 ## 8. 설문 내용 수정
 
-모두 `main.html` 상단 `CONFIG` 블록에서 바꿉니다. 지표를 바꾸면 비교 단계·결과표·전송 데이터가 자동으로 따라옵니다.
+모두 `index.html` 상단 `CONFIG` 블록에서 바꿉니다. 지표를 바꾸면 비교 단계·결과표·전송 데이터가 자동으로 따라옵니다.
 
 ```js
 crLimit: 0.2,     // 오류 기준 (초과 시 진행 불가)
@@ -175,5 +176,5 @@ trees: [
 
 1. supabase.com → New project (Region: Northeast Asia) 
 2. SQL Editor에 `supabase.sql` 전체 붙여넣고 Run (`supabase_update.sql`은 불필요)
-3. 대시보드 **Connect** 창에서 Project URL과 publishable 키 복사 → `main.html`의 `CONFIG.supabase`에 입력
-4. 로컬에서 `main.html` 열어 응답 1건 제출 → Table Editor에서 확인 → GitHub Pages에 업로드
+3. 대시보드 **Connect** 창에서 Project URL과 publishable 키 복사 → `index.html`의 `CONFIG.supabase`에 입력
+4. 로컬에서 `index.html` 열어 응답 1건 제출 → Table Editor에서 확인 → GitHub Pages에 업로드
