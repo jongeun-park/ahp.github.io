@@ -90,6 +90,28 @@
   button.primary:disabled{background:#c8c8c8;border-color:#c8c8c8;cursor:not-allowed}
   button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line-dark);padding:10px 18px;font:inherit;font-size:15px;cursor:pointer}
   th,td,.pair-head span{word-break:keep-all;overflow-wrap:anywhere}
+  button.ghost.small{padding:4px 10px;font-size:14px;margin-left:6px}
+  .nav span{display:flex;gap:8px}
+  .note.save{margin:8px 0 0;color:#555}
+  /* 인쇄(PDF)용 */
+  .print-sheet{display:none}
+  @media print{
+    @page{size:A4;margin:16mm}
+    body{font-size:11pt}
+    header,.steps,.banner,main > .card,.nav{display:none !important}
+    .wrap{max-width:none;padding:0}
+    .print-sheet{display:block}
+    .print-sheet h1{font-size:16pt;margin:0 0 4px}
+    .print-sheet h2{font-size:13pt;margin:16px 0 6px;page-break-after:avoid}
+    .print-sheet table{font-size:10.5pt;page-break-inside:auto}
+    .print-sheet tr{page-break-inside:avoid}
+    .print-sheet th{border-bottom:1.5px solid #000}
+    .print-sheet td,.print-sheet th{padding:4px 6px;border-bottom:0.5px solid #bbb}
+    .print-sheet table.meta td{border:0;padding:2px 10px 2px 0}
+    .print-sheet table.meta td:nth-child(odd){font-weight:700;width:60px}
+    .print-sheet tr.area-row td{background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .print-sheet .note{font-size:9.5pt;margin-top:10px}
+  }
   @media (max-width:600px){
     .wrap{padding:18px 12px 60px}
     header h1{font-size:19px}
@@ -106,7 +128,8 @@
     th.num{white-space:normal}
     td.sub{padding-left:14px}
     .cr-box{padding:10px 12px}
-    .nav button{padding:10px 16px}
+    .nav button{padding:10px 12px}
+    .nav span{gap:6px}
   }
 </style>
 </head>
@@ -117,16 +140,17 @@
     <h1 id="title"></h1>
   </header>
   <div class="banner" id="testBanner" hidden>
-    <b>테스트 모드</b> — Supabase 주소/키(<code>CONFIG.supabase</code>)가 비어 있어 응답이 전송되지 않습니다. 제출 시 전송될 데이터만 화면에 표시됩니다.
+    <b>테스트 모드</b>: Supabase 주소/키(<code>CONFIG.supabase</code>)가 비어 있어 응답이 전송되지 않습니다. 제출 시 전송될 데이터만 화면에 표시됩니다.
   </div>
   <div class="banner" id="connBanner" style="border-color:var(--red);background:var(--red-bg)" hidden></div>
+  <div class="banner" id="draftBanner" hidden></div>
   <nav class="steps" id="steps"></nav>
   <main id="main"></main>
 </div>
 
 <script>
 /* =====================================================================
- *  설정 — 이 블록만 수정하면 설문 내용을 바꿀 수 있습니다
+ *  설정: 이 블록만 수정하면 설문 내용을 바꿀 수 있습니다
  * ===================================================================== */
 const CONFIG = {
   // Supabase 프로젝트 설정. 둘 중 하나라도 비어 있으면 테스트 모드로 동작합니다.
@@ -310,6 +334,48 @@ const state = {
   submissionId: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 };
 SECTIONS.forEach(s => state.answers[s.id] = {});
+
+// ---- 임시저장 (응답자 브라우저의 localStorage) ----
+// 응답을 누를 때마다 자동 저장되며, 같은 기기·같은 브라우저에서 다시 열면 이어서 응답할 수 있습니다.
+// 제출이 완료되면 지웁니다. 사생활 보호 모드 등 저장이 막힌 환경에서는 조용히 건너뜁니다.
+const SAVE_KEY = "ahp_draft_" + CONFIG.trees.map(t => t.id + t.areas.length).join("");
+function saveDraft(){
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      answers: state.answers, respondent: state.respondent, startedAt: state.startedAt,
+      submissionId: state.submissionId, savedAt: Date.now()
+    }));
+    const el = document.getElementById("saveMsg");
+    if (el){ el.textContent = "임시저장됨 " + new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }); }
+  } catch (_) {}
+}
+function loadDraft(){
+  try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); return d && d.answers ? d : null; } catch (_) { return null; }
+}
+function clearDraft(){ try { localStorage.removeItem(SAVE_KEY); } catch (_) {} }
+function restoreDraft(){
+  const d = loadDraft(); if (!d) return;
+  for (const sec of SECTIONS) state.answers[sec.id] = (d.answers[sec.id]) || {};
+  state.respondent = d.respondent || {};
+  state.startedAt = d.startedAt || Date.now();
+  state.submissionId = d.submissionId || state.submissionId;
+  $("#draftBanner").hidden = true;
+  state.step = firstIncomplete() || N_STEPS + 1;   // 안내 화면의 빈 입력란을 읽지 않도록 go() 대신 직접 이동
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function discardDraft(){ clearDraft(); $("#draftBanner").hidden = true; }
+function offerDraft(){
+  const d = loadDraft(); if (!d) return;
+  const n = SECTIONS.filter(sec => Object.keys(d.answers[sec.id] || {}).length).length;
+  if (!n) return;
+  const when = new Date(d.savedAt).toLocaleString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  const el = $("#draftBanner");
+  el.hidden = false;
+  el.innerHTML = `<b>임시저장된 응답이 있습니다</b> (${esc(when)}, ${n}개 단계 응답 중).
+    <button class="ghost small" onclick="restoreDraft()">이어서 응답</button>
+    <button class="ghost small" onclick="discardDraft()">새로 시작</button>`;
+}
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -521,6 +587,7 @@ function renderSection(k){
     <p class="note">총 ${pairs.length}개 쌍을 비교합니다. 왼쪽 항목이 더 중요하면 왼쪽 숫자를, 오른쪽 항목이 더 중요하면 오른쪽 숫자를 선택하세요.</p>
     <div id="pairs" class="pairs">${pairs.map(([i, j]) => pairHTML(sec, i, j)).join("")}</div>
     <div class="cr-box" id="crbox"></div>
+    <p class="note save" id="saveMsg">응답은 이 브라우저에 자동으로 임시저장됩니다. 같은 기기에서 다시 열면 이어서 응답할 수 있습니다.</p>
     <div class="nav">
       <button class="ghost" onclick="go(${k - 1})">이전</button>
       <button class="primary" onclick="go(${k + 1})">${k === N_STEPS ? "결과 확인" : "다음"}</button>
@@ -573,28 +640,75 @@ function renderResults(){
   return `${blocks}
   <section class="card">
     <h2>제출</h2>
-    <p>위 가중치는 응답하신 쌍대비교로부터 산출된 값입니다. 확인 후 제출해 주세요.</p>
+    <p>위 가중치는 응답하신 쌍대비교로부터 산출된 값입니다. 확인 후 제출해 주세요.
+       제출 전에 <b>PDF로 저장</b>을 눌러 응답 내용을 보관해 두실 수 있습니다.</p>
     ${testNote}
     <div class="nav">
       <button class="ghost" onclick="go(${N_STEPS})">이전</button>
-      <button class="primary" id="submitBtn" onclick="submitAll()">제출</button>
+      <span>
+        <button class="ghost" onclick="printPDF()">PDF로 저장</button>
+        <button class="primary" id="submitBtn" onclick="submitAll()">제출</button>
+      </span>
     </div>
     <div id="submitMsg"></div>
-  </section>`;
+  </section>
+  ${printSheetHTML(res)}`;
+}
+
+// 인쇄(PDF)용 응답 요약: 화면에는 보이지 않고 인쇄할 때만 나타남
+function printSheetHTML(res){
+  const r = state.respondent, pct = x => (x * 100).toFixed(1) + "%";
+  const when = new Date().toLocaleString("ko-KR");
+  let html = `<div class="print-sheet">
+    <h1>${esc(CONFIG.title)}</h1>
+    <p>${esc(CONFIG.organization)}</p>
+    <table class="meta"><tr><td>소속</td><td>${esc(r.affiliation || "")}</td><td>이름</td><td>${esc(r.name || "")}</td></tr></table>`;
+  for (const t of CONFIG.trees){
+    const areaSec = secById(t.id + "0"), ar = res[areaSec.id];
+    html += `<h2>${esc(t.name)}: 가중치</h2>
+      <table><thead><tr><th>평가영역 / 세부지표</th><th class="num">영역 내</th><th class="num">종합</th><th class="num">CR</th></tr></thead><tbody>`;
+    t.areas.forEach((a, k) => {
+      const sec = secById(`${t.id}${k + 1}`), rr = res[sec.id], aw = ar.w[k];
+      html += `<tr class="area-row"><td>${esc(a.name)}</td><td class="num">${pct(aw)}</td><td class="num">${pct(aw)}</td><td class="num">${k === 0 ? ar.CR.toFixed(3) : ""}</td></tr>`;
+      sec.items.forEach((it, i) => html += `<tr><td class="sub">${esc(it)}</td><td class="num">${pct(rr.w[i])}</td><td class="num">${pct(aw * rr.w[i])}</td><td class="num">${i === 0 ? rr.CR.toFixed(3) : ""}</td></tr>`);
+    });
+    html += `</tbody></table>`;
+  }
+  html += `<h2>쌍대비교 응답</h2><table><thead><tr><th>단계</th><th>왼쪽 항목</th><th class="num">선택</th><th>오른쪽 항목</th></tr></thead><tbody>`;
+  for (const sec of SECTIONS){
+    for (const [i, j] of pairsOf(sec.items.length)){
+      const a = state.answers[sec.id][i + "-" + j]; if (!a) continue;
+      const choice = a.side === "E" ? "1 (동등)" : a.side === "L" ? `◀ ${a.val}` : `${a.val} ▶`;
+      html += `<tr><td>${esc(sec.short)}</td><td>${esc(sec.items[i])}</td><td class="num">${choice}</td><td>${esc(sec.items[j])}</td></tr>`;
+    }
+  }
+  html += `</tbody></table>
+    <p class="note">◀ n: 왼쪽 항목이 n만큼 더 중요 / n ▶: 오른쪽 항목이 n만큼 더 중요. 이 문서는 응답자 보관용이며, 제출이 되지 않은 경우 설문 담당자에게 보내 주시면 됩니다.</p>
+  </div>`;
+  return html;
+}
+
+function printPDF(){
+  document.title = `AHP응답_${(state.respondent.name || "응답자")}_${state.submissionId}`;
+  window.print();
+  setTimeout(() => document.title = CONFIG.title, 1000);
 }
 
 function renderDone(res){
+  const { res: r2 } = computeAll();
   $("#main").innerHTML = `<section class="card">
     <h2>${res.test ? "테스트 완료" : "제출 완료"}</h2>
     <p>${res.test
       ? "테스트 모드이므로 실제 전송은 하지 않았습니다. 아래는 Supabase 테이블에 한 행으로 기록될 데이터입니다."
       : "응답해 주셔서 감사합니다. 응답이 정상적으로 기록되었습니다."}</p>
     ${res.duplicate ? `<p class="note">이미 기록된 응답이라 중복 저장하지 않았습니다.</p>` : ""}
+    <p><button class="ghost" onclick="printPDF()">응답 내용 PDF로 저장</button></p>
     ${res.test ? `<pre class="json">${esc(JSON.stringify(res.payload, null, 2))}</pre>
                   <button class="ghost" onclick="downloadJSON()">JSON 내려받기</button>` : ""}
-  </section>`;
+  </section>${printSheetHTML(r2)}`;
   state.step = N_STEPS + 2;
   state.submitted = true;
+  if (!res.test) clearDraft();
   renderSteps();
 }
 
@@ -621,6 +735,7 @@ function readRespondent(){
     return false;
   }
   msg.innerHTML = "";
+  saveDraft();
   return true;
 }
 
@@ -643,6 +758,7 @@ function pick(secId, key, side, val){
   const [i, j] = key.split("-").map(Number);
   document.getElementById(`pair-${secId}-${key}`).outerHTML = pairHTML(sec, i, j);
   updateCR(sec);
+  saveDraft();
 }
 
 function updateCR(sec){
@@ -672,7 +788,7 @@ function updateCR(sec){
   const cr = r.CR;
   if (cr > CONFIG.crLimit){
     box.className = "cr-box err";
-    box.innerHTML = `<div class="cr-val">⚠ 일관성 비율(CR) = ${cr.toFixed(3)} — 기준치 ${CONFIG.crLimit} 초과</div>
+    box.innerHTML = `<div class="cr-val">⚠ 일관성 비율(CR) = ${cr.toFixed(3)}: 기준치 ${CONFIG.crLimit} 초과</div>
       <div class="cr-msg">응답 간 논리적 일관성이 낮습니다 (예: A &gt; B, B &gt; C인데 C &gt; A).
         ${CONFIG.showHint ? "붉게 표시된 비교를 중심으로" : "각 비교를"} 다시 검토해 주세요.
         CR이 ${CONFIG.crLimit} 이하가 되어야 이 단계가 완료됩니다.</div>`;
@@ -712,8 +828,8 @@ function restUrl(){ return baseUrl() + "/rest/v1/"; }
 function apiKey(){ return String(CONFIG.supabase.key || "").trim(); }
 
 // 키 전달 방식 두 가지:
-//   header — 표준 방식. apikey 헤더에 키를 넣음
-//   query  — 일부 기관 네트워크가 apikey 헤더를 제거하는 경우를 위한 우회. 주소 뒤에 ?apikey=… 로 넣음
+//   header: 표준 방식. apikey 헤더에 키를 넣음
+//   query : 일부 기관 네트워크가 apikey 헤더를 제거하는 경우를 위한 우회. 주소 뒤에 ?apikey=… 로 넣음
 function withKey(url){ return url + (url.includes("?") ? "&" : "?") + "apikey=" + encodeURIComponent(apiKey()); }
 function keyedUrl(url, mode){ return mode === "query" ? withKey(url) : url; }
 function keyedHeaders(mode, extra){ return Object.assign(mode === "query" ? {} : { "apikey": apiKey() }, extra || {}); }
@@ -747,14 +863,14 @@ async function checkConnection(){
     if (b.ok){ state.keyMode = "query"; console.info("apikey 헤더가 차단되어 주소 방식으로 전송합니다."); return; }
   } catch (e) {
     el.hidden = false;
-    el.innerHTML = `<b>연결 불가</b> — 응답 저장 서버(<code>${esc(restUrl())}</code>)에 접속할 수 없습니다.
+    el.innerHTML = `<b>연결 불가</b>: 응답 저장 서버(<code>${esc(restUrl())}</code>)에 접속할 수 없습니다.
       주소가 정확한지, 또는 현재 네트워크(기관 방화벽 등)가 supabase.co 접속을 막고 있지 않은지 확인해 주세요.
       이 상태로도 설문은 진행할 수 있으며, 제출 시 응답 파일을 내려받아 담당자에게 보낼 수 있습니다.`;
     return;
   }
   const fmt = p => `HTTP ${p.status}${p.detail ? " " + esc(p.detail) : ""}`;
   el.hidden = false;
-  el.innerHTML = `<b>설정 오류</b> — 응답 저장 서버 주소는 열리지만 키가 거부되었습니다.
+  el.innerHTML = `<b>설정 오류</b>: 응답 저장 서버 주소는 열리지만 키가 거부되었습니다.
     헤더 방식: ${fmt(a)} / 주소 방식: ${fmt(b)}.<br>
     <a href="${esc(withKey(probeUrl()))}" target="_blank" rel="noopener">이 링크</a>를 새 탭에서 열었을 때
     “permission denied for table …”이 보이면 키는 정상이고 네트워크 문제이며, “Invalid API key”가 보이면
@@ -815,7 +931,7 @@ async function sendToSupabase(row){
       last = r;
       if (!(r.status === 401 || r.status === 403)) break;   // 키 문제가 아니면 재시도 의미 없음
     } catch (e) {
-      return { ok: false, error: `${e.message || e} — 요청 주소: ${restUrl() + CONFIG.table}. 주소가 열리지 않거나 네트워크가 차단된 상태입니다.` };
+      return { ok: false, error: `${e.message || e}: 요청 주소: ${restUrl() + CONFIG.table}. 주소가 열리지 않거나 네트워크가 차단된 상태입니다.` };
     }
   }
   return last;
@@ -851,6 +967,7 @@ $("#org").textContent = CONFIG.organization;
 $("#title").textContent = CONFIG.title;
 $("#testBanner").hidden = !isTestMode();
 render();
+offerDraft();
 checkConnection();
 </script>
 </body>
