@@ -18,8 +18,33 @@
   .wrap{max-width:880px;margin:0 auto;padding:28px 16px 80px}
   header{border-bottom:2px solid var(--line-dark);padding-bottom:12px;margin-bottom:14px}
   header .org{font-size:15px;margin:0 0 4px}
-  header h1{margin:0;font-size:22px;letter-spacing:-.2px}
+  header h1{margin:0;font-size:22px;letter-spacing:-.2px;cursor:pointer;display:inline-block}
+  header h1:hover{text-decoration:underline;text-underline-offset:4px}
   .banner{background:var(--soft);border:1px solid var(--line);padding:10px 14px;font-size:15px;margin-bottom:14px}
+  /* 현재 평가 광물 띠 (스크롤해도 상단 고정) */
+  .mineral-bar{position:sticky;top:0;z-index:10;display:flex;align-items:baseline;gap:14px;background:var(--line-dark);color:#fff;padding:9px 16px;margin:0 0 12px}
+  .mineral-bar[hidden]{display:none}
+  .mineral-bar .lbl{font-size:15px;opacity:.85}
+  .mineral-bar .name{font-size:22px;font-weight:700;letter-spacing:.5px}
+  .mineral-bar .name small{font-size:15px;font-weight:400;margin-left:4px;opacity:.85}
+  .mineral-bar .save{font-size:14px;opacity:.85;padding:1px 8px;border:1px solid rgba(255,255,255,.5)}
+  .mineral-bar .pos{margin-left:auto;font-size:15px;opacity:.85}
+  .mineral-bar .inv{margin-left:0}
+  .mtag{display:inline-block;background:var(--line-dark);color:#fff;padding:1px 10px;margin-right:6px;font-size:15px;vertical-align:middle}
+  .mineral-bar .prog{font-size:15px}
+  .mineral-bar .inv{margin-left:auto;background:#fff;color:var(--ink);border-color:#fff}
+  .who{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;background:var(--soft);margin:0 0 14px;font-size:15px}
+  /* 광물 선택 카드 */
+  .minerals{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:8px 0 12px}
+  .mineral{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line-dark);background:#fff;padding:12px 14px;font:inherit;color:var(--ink);cursor:pointer;text-align:left}
+  .mineral:hover{background:var(--soft)}
+  .mineral .sym{font-size:13px;border:1px solid var(--line);padding:0 6px}
+  .mineral .nm{font-size:19px;font-weight:700;margin-top:4px}
+  .mineral .st{font-size:14px}
+  .mineral .go{font-size:15px;font-weight:700;margin-top:6px}
+  .mineral.cur{background:var(--soft)}
+  .mineral.done{border-color:var(--line);color:#777;background:#fafafa;cursor:default}
+  .mineral.done .nm{color:var(--ink)}
   .steps{display:flex;gap:6px;margin:14px 0 20px;flex-wrap:wrap}
   .steps span{padding:4px 12px;border:1px solid var(--line);font-size:15px;background:#fff;white-space:nowrap}
   .steps span.done{border-color:var(--line-dark)}
@@ -92,16 +117,17 @@
   th,td,.pair-head span{word-break:keep-all;overflow-wrap:anywhere}
   button.ghost.small{padding:4px 10px;font-size:14px;margin-left:6px}
   .nav span{display:flex;gap:8px}
-  .note.save{margin:8px 0 0;color:#555}
   /* 인쇄(PDF)용 */
   .print-sheet{display:none}
   @media print{
     @page{size:A4;margin:16mm}
     body{font-size:11pt}
-    header,.steps,.banner,main > .card,.nav{display:none !important}
+    header,.steps,.banner,main,.nav{display:none !important}
     .wrap{max-width:none;padding:0}
     .print-sheet{display:block}
+    .mineral-bar{display:none !important}
     .print-sheet h1{font-size:16pt;margin:0 0 4px}
+    .print-sheet .pmineral{font-size:14pt;margin:6px 0 10px}
     .print-sheet h2{font-size:13pt;margin:16px 0 6px;page-break-after:avoid}
     .print-sheet table{font-size:10.5pt;page-break-inside:auto}
     .print-sheet tr{page-break-inside:avoid}
@@ -111,9 +137,18 @@
     .print-sheet table.meta td:nth-child(odd){font-weight:700;width:60px}
     .print-sheet tr.area-row td{background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .print-sheet .note{font-size:9.5pt;margin-top:10px}
+    .print-sheet h3{font-size:11.5pt;margin:14px 0 6px;page-break-after:avoid}
+    .print-sheet .crline{font-size:10pt;margin:-4px 0 12px;text-align:right}
+    .print-sheet .mblock{page-break-before:always}
+    .print-sheet table.wide th.num,.print-sheet table.wide td.num{width:11%}
+    .print-sheet table{margin-bottom:10px}
   }
   @media (max-width:600px){
     .wrap{padding:18px 12px 60px}
+    .mineral-bar{margin:0 -12px 12px;padding:7px 12px;gap:8px 10px;flex-wrap:wrap}
+    .mineral-bar .pos{margin-left:0}
+    .mineral-bar .name{font-size:19px}
+    .minerals{grid-template-columns:1fr 1fr}
     header h1{font-size:19px}
     .fields{grid-template-columns:1fr}
     .card{padding:14px}
@@ -137,13 +172,13 @@
 <div class="wrap">
   <header>
     <p class="org" id="org"></p>
-    <h1 id="title"></h1>
+    <h1 id="title" onclick="go(0)" title="안내 화면으로"></h1>
   </header>
   <div class="banner" id="testBanner" hidden>
-    <b>테스트 모드</b>: Supabase 주소/키(<code>CONFIG.supabase</code>)가 비어 있어 응답이 전송되지 않습니다. 제출 시 전송될 데이터만 화면에 표시됩니다.
+    <b>테스트 모드</b>: Supabase 주소/키(<code>CONFIG.supabase</code>)가 비어 있어 등록·저장·제출이 이 브라우저 안에서만 흉내 납니다.
   </div>
   <div class="banner" id="connBanner" style="border-color:var(--red);background:var(--red-bg)" hidden></div>
-  <div class="banner" id="draftBanner" hidden></div>
+  <div class="mineral-bar" id="mineralBar" hidden></div>
   <nav class="steps" id="steps"></nav>
   <main id="main"></main>
 </div>
@@ -175,6 +210,15 @@ const CONFIG = {
 
   organization: "에너지경제연구원 에너지안보정책연구실",
   title: "자원안보 진단·평가 지표 가중치 산정을 위한 AHP 전문가 설문",
+
+  // 평가 대상 광물. 광물마다 같은 지표 체계로 설문을 한 번씩 하고, 광물별로 따로 제출됩니다.
+  minerals: [
+    { name: "규소",     symbol: "Si" },
+    { name: "마그네슘", symbol: "Mg" },
+    { name: "망간",     symbol: "Mn" },
+    { name: "몰리브덴", symbol: "Mo" },
+    { name: "백금",     symbol: "Pt" }
+  ],
 
   // 두 개의 독립된 계층. 계층 간(안정성 vs 대응력) 비교는 하지 않습니다.
   trees: [
@@ -309,13 +353,13 @@ for (const t of CONFIG.trees){
   SECTIONS.push({
     id: t.id + "0", tree: t.id, treeName: t.name, level: "area", parent: null,
     title: `${t.name} 평가영역 간 상대적 중요도`, short: `${t.name} 영역`,
-    desc: `${t.name} 지표를 구성하는 아래 ${t.areas.length}개 평가영역 중 어느 것이 얼마나 더 중요하다고 보십니까?`,
+    desc: `{M}의 ${t.name} 지표를 구성하는 아래 ${t.areas.length}개 평가영역 중 어느 것이 얼마나 더 중요하다고 보십니까?`,
     items: t.areas.map(a => a.name)
   });
   t.areas.forEach((a, k) => SECTIONS.push({
     id: `${t.id}${k + 1}`, tree: t.id, treeName: t.name, level: "item", parent: a.name,
     title: `'${a.name}' 영역 세부지표 간 상대적 중요도`, short: a.name,
-    desc: `${t.name} › ${a.name} 영역을 구성하는 아래 ${a.items.length}개 세부지표 중 어느 것이 얼마나 더 중요하다고 보십니까?`,
+    desc: `{M}의 ${t.name} › ${a.name} 영역을 구성하는 아래 ${a.items.length}개 세부지표 중 어느 것이 얼마나 더 중요하다고 보십니까?`,
     items: a.items.slice()
   }));
 }
@@ -326,55 +370,214 @@ const LABEL = CONFIG.scale.labels;
 /* =====================================================================
  *  상태
  * ===================================================================== */
+const MINERALS = CONFIG.minerals;
+const mineralByName = n => MINERALS.find(m => m.name === n) || null;
+// 주소에 ?m=광물이름 을 붙이면 그 광물만 평가하는 전용 링크가 됩니다 (선택 사항)
+const LOCKED = mineralByName(new URLSearchParams(location.search).get("m") || "");
+
+const newId = () => "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const state = {
   step: 0,
-  answers: {},            // answers[secId]["i-j"] = {side:'L'|'E'|'R', val}
+  mineral: null,          // 현재 평가 중인 광물 이름
+  answers: {},            // answers[secId]["i-j"] = {side:'L'|'E'|'R', val}  (현재 광물의 응답)
   respondent: {},
   startedAt: Date.now(),
-  submissionId: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+  submissionId: newId()
 };
-SECTIONS.forEach(s => state.answers[s.id] = {});
+const blankAnswers = () => { const a = {}; SECTIONS.forEach(s => a[s.id] = {}); return a; };
+state.answers = blankAnswers();
 
-// ---- 임시저장 (응답자 브라우저의 localStorage) ----
-// 응답을 누를 때마다 자동 저장되며, 같은 기기·같은 브라우저에서 다시 열면 이어서 응답할 수 있습니다.
-// 제출이 완료되면 지웁니다. 사생활 보호 모드 등 저장이 막힌 환경에서는 조용히 건너뜁니다.
-const SAVE_KEY = "ahp_draft_" + CONFIG.trees.map(t => t.id + t.areas.length).join("");
-function saveDraft(){
+/* =====================================================================
+ *  계정·저장: 응답자는 이름·소속·비밀번호로 등록하고, 이름+비밀번호로 로그인합니다.
+ *  임시저장과 제출은 모두 Supabase 함수(ahp_*)를 통해 사람별로 저장되므로
+ *  어느 기기·어느 브라우저에서든 같은 계정으로 이어서 응답할 수 있습니다.
+ *  (Supabase 설정이 비어 있는 테스트 모드에서는 이 브라우저 안에서만 흉내 냅니다)
+ * ===================================================================== */
+const KEY_BASE = "ahp_" + CONFIG.trees.map(t => t.id + t.areas.length).join("") + "_";
+const TOKEN_KEY = KEY_BASE + "token";
+// 브라우저에는 로그인 토큰만, 그것도 창을 닫으면 사라지는 sessionStorage 에 둡니다 (닫으면 자동 로그아웃, 새로고침은 유지).
+// 응답·진행 상태는 모두 서버에 있고, 브라우저 정보는 수집하지 않습니다.
+const ssGet = (k, fb) => { try { return JSON.parse(sessionStorage.getItem(k) || "null") ?? fb; } catch (_) { return fb; } };
+const ssSet = (k, v) => { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+const ssDel = k => { try { sessionStorage.removeItem(k); } catch (_) {} };
+// 테스트 모드(Supabase 설정이 비어 있을 때)의 흉내용 저장소만 localStorage 를 씁니다
+const lsGet = (k, fb) => { try { return JSON.parse(localStorage.getItem(k) || "null") ?? fb; } catch (_) { return fb; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+
+const account = { token: null, name: "", affiliation: "", drafts: {}, done: {} };   // drafts[m] = {answers, started_at, submission_id, updated_at}; done[m] = {...}
+
+// ---- 서버 호출 (Supabase RPC) ----
+async function rpc(fn, args, opts){
+  if (isTestMode()) return localRpc(fn, args);
+  const mode = state.keyMode || "header";
+  const res = await fetch(keyedUrl(restUrl() + "rpc/" + fn, mode), {
+    method: "POST", headers: keyedHeaders(mode, { "Content-Type": "application/json" }), body: JSON.stringify(args),
+    keepalive: !!(opts && opts.keepalive)          // 화면을 떠나는 중에도 전송이 끊기지 않도록
+  });
+  if (!res.ok){ const d = await readDetail(res); throw new Error(`HTTP ${res.status} ${d}`); }
+  return await res.json();
+}
+
+// 테스트 모드용 흉내: 이 브라우저의 localStorage 에만 저장
+function localRpc(fn, a){
+  const db = lsGet(KEY_BASE + "testdb", { users: [], drafts: {}, done: {} });
+  const save = () => lsSet(KEY_BASE + "testdb", db);
+  const user = t => db.users.find(u => u.token === t);
+  const keyOf = n => String(n || "").toLowerCase().replace(/\s+/g, "");
+  if (fn === "ahp_enter"){
+    const k = keyOf(a.p_name), aff = (a.p_affiliation || "").trim();
+    if (k.length < 2) return { ok: false, error: "invalid_name" };
+    if (!/^[0-9]{4}$/.test(a.p_password || "")) return { ok: false, error: "pin_format" };
+    const same = db.users.filter(u => keyOf(u.name) === k);
+    if (!same.length){
+      if (aff.length < 2) return { ok: false, error: "need_affiliation" };
+      const u = { name: a.p_name.trim(), affiliation: aff, pw: a.p_password, token: "t" + newId() }; db.users.push(u); save();
+      return { ok: true, token: u.token, name: u.name, affiliation: u.affiliation, existing: false };
+    }
+    const u = same.find(u => u.pw === a.p_password); if (!u) return { ok: false, error: "bad_password" };
+    if (aff.length >= 2) u.affiliation = aff; save();
+    return { ok: true, token: u.token, name: u.name, affiliation: u.affiliation, existing: true };
+  }
+  if (fn === "ahp_login"){ const u = db.users.find(u => u.name === (a.p_name || "").trim() && u.pw === a.p_password); return u ? { ok: true, token: u.token, name: u.name, affiliation: u.affiliation } : { ok: false, error: "bad_credentials" }; }
+  const u = user(a.p_token); if (!u) return { ok: false, error: "invalid_session" };
+  const k = u.token;
+  if (fn === "ahp_state") return { ok: true, name: u.name, affiliation: u.affiliation, drafts: Object.values(db.drafts[k] || {}), done: Object.values(db.done[k] || {}) };
+  if (fn === "ahp_save_draft"){ if ((db.done[k] || {})[a.p_mineral]) return { ok: false, error: "already_submitted" }; (db.drafts[k] = db.drafts[k] || {})[a.p_mineral] = { mineral: a.p_mineral, answers: a.p_answers, started_at: a.p_started_at, submission_id: a.p_submission_id, updated_at: new Date().toISOString() }; save(); return { ok: true }; }
+  if (fn === "ahp_submit"){ const m = a.p_row.mineral; if ((db.done[k] || {})[m]) return { ok: true, duplicate: true }; (db.done[k] = db.done[k] || {})[m] = { mineral: m, submission_id: a.p_row.submission_id, submitted_at: new Date().toISOString(), cr: a.p_row.cr, weights: a.p_row.weights, judgments: a.p_row.judgments }; if (db.drafts[k]) delete db.drafts[k][m]; save(); return { ok: true }; }
+  if (fn === "ahp_my_responses") return { ok: true, name: u.name, affiliation: u.affiliation, responses: Object.values(db.done[k] || {}) };
+  if (fn === "ahp_logout") return { ok: true };
+  return { ok: false, error: "unknown" };
+}
+
+const ERR_TEXT = {
+  invalid_name: "이름을 2자 이상 입력해 주세요.",
+  need_affiliation: "처음 접속이시군요. 소속을 입력해 주세요.",
+  pin_format: "비밀번호는 숫자 4자리로 입력해 주세요.",
+  too_many: "비밀번호를 여러 번 틀려 잠시 막혔습니다. 15분 뒤에 다시 시도하거나 설문 담당자에게 연락해 주세요.",
+  bad_password: "이 이름은 이미 등록되어 있는데 비밀번호가 다릅니다. 등록 때 정한 비밀번호를 입력해 주세요. 동명이인이시면 이름 뒤에 소속을 붙여 주세요(예: 홍길동-KEEI). 비밀번호를 잊으셨으면 설문 담당자에게 연락해 주세요.",
+  bad_credentials: "이름 또는 비밀번호가 맞지 않습니다.",
+  invalid_session: "접속이 만료되었습니다. 이름과 비밀번호로 다시 로그인하면 하던 곳부터 이어집니다.",
+  already_submitted: "이미 제출한 광물입니다."
+};
+const errText = e => ERR_TEXT[e] || `오류: ${e}`;
+
+// 로그인 결과 반영 → 서버 상태 불러오기
+async function applyLogin(r){
+  account.token = r.token; account.name = r.name; account.affiliation = r.affiliation;
+  state.respondent = { name: r.name, affiliation: r.affiliation };
+  ssSet(TOKEN_KEY, r.token);
+  await refreshState();
+}
+async function refreshState(){
+  const r = await rpc("ahp_state", { p_token: account.token });
+  if (!r.ok){ if (r.error === "invalid_session") logout(true); return false; }
+  account.name = r.name; account.affiliation = r.affiliation;
+  state.respondent = { name: r.name, affiliation: r.affiliation };
+  account.drafts = {}; (r.drafts || []).forEach(d => account.drafts[d.mineral] = d);
+  account.done = {};   (r.done   || []).forEach(d => account.done[d.mineral] = d);
+  return true;
+}
+async function enter(){
+  const g = id => document.getElementById(id);
+  const name = g("name").value, aff = g("affiliation").value, pw = g("password").value;
+  setAuthMsg("확인 중…");
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({
-      answers: state.answers, respondent: state.respondent, startedAt: state.startedAt,
-      submissionId: state.submissionId, savedAt: Date.now()
-    }));
-    const el = document.getElementById("saveMsg");
-    if (el){ el.textContent = "임시저장됨 " + new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }); }
-  } catch (_) {}
+    const r = await rpc("ahp_enter", { p_name: name, p_affiliation: aff, p_password: pw });
+    if (!r.ok){ setAuthMsg(errText(r.error), true); return; }
+    await applyLogin(r);
+    const list = LOCKED ? [LOCKED] : MINERALS;
+    const inProg = list.find(x => !isDone(x.name) && draftStarted(x.name));
+    if (r.existing && inProg){
+      // 하던 광물이 있으면 바로 그 단계로 이어서
+      state.notice = `${account.name} 님, 다시 오셨군요. 응답하시던 ${inProg.name} 평가를 ${draftProgress(inProg.name) + 1}단계부터 이어서 진행합니다.`;
+      startMineral(inProg.name);
+      return;
+    }
+    state.notice = r.existing ? `${account.name} 님, 다시 오셨군요. 이전 응답이 그대로 이어집니다.` : "등록되었습니다. 비밀번호(숫자 4자리)는 다른 기기에서 이어서 응답할 때 필요하니 기억해 두세요.";
+    render();
+  } catch (e) { setAuthMsg("서버에 연결할 수 없습니다. 네트워크를 확인해 주세요. (" + e.message + ")", true); }
 }
-function loadDraft(){
-  try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); return d && d.answers ? d : null; } catch (_) { return null; }
+async function logoutNow(){ if (savePending){ clearTimeout(saveTimer); await flushDraft(); } await logout(); }
+async function logout(silent){
+  if (account.token && !silent){ try { await rpc("ahp_logout", { p_token: account.token }); } catch (_) {} }
+  account.token = null; account.name = ""; account.affiliation = ""; account.drafts = {}; account.done = {};
+  lastSaveText = "";
+  ssDel(TOKEN_KEY);
+  state.mineral = null; state.answers = blankAnswers(); state.step = 0; state.respondent = {};
+  if (!silent) render();
 }
-function clearDraft(){ try { localStorage.removeItem(SAVE_KEY); } catch (_) {} }
-function restoreDraft(){
-  const d = loadDraft(); if (!d) return;
-  for (const sec of SECTIONS) state.answers[sec.id] = (d.answers[sec.id]) || {};
-  state.respondent = d.respondent || {};
-  state.startedAt = d.startedAt || Date.now();
-  state.submissionId = d.submissionId || state.submissionId;
-  $("#draftBanner").hidden = true;
-  state.step = firstIncomplete() || N_STEPS + 1;   // 안내 화면의 빈 입력란을 읽지 않도록 go() 대신 직접 이동
+function setAuthMsg(t, err){
+  const el = document.getElementById("authMsg"); if (!el) return;
+  el.innerHTML = t ? `<div class="cr-box ${err ? "err" : "warn"} slim"><div class="cr-msg">${esc(t)}</div></div>` : "";
+}
+
+// 페이지를 열 때: 저장된 토큰이 있으면 자동 로그인
+async function autoLogin(){
+  const t = ssGet(TOKEN_KEY, null); if (!t) return;
+  account.token = t;
+  try { if (!(await refreshState())) return; } catch (_) { account.token = null; return; }
+  render();
+}
+
+// ---- 임시저장 (서버) ----
+let saveTimer = null, savePending = false, lastSaveText = "";
+const hhmm = () => new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+function showSave(short){
+  lastSaveText = short;
+  const a = document.getElementById("saveState"); if (a) a.textContent = short;
+}
+function saveDraft(){                    // 응답할 때마다 호출. 0.4초 안에 또 누르면 묶어서 한 번만 전송
+  if (!state.mineral || !account.token) return;
+  // 화면의 진행 표시는 즉시 갱신 (서버 확인은 뒤따라옴)
+  account.drafts[state.mineral] = { mineral: state.mineral, answers: JSON.parse(JSON.stringify(state.answers)),
+    started_at: new Date(state.startedAt).toISOString(), submission_id: state.submissionId, updated_at: new Date().toISOString() };
+  savePending = true;
+  showSave("저장 중…");
+  clearTimeout(saveTimer); saveTimer = setTimeout(flushDraft, 400);
+}
+async function flushDraft(){
+  if (!savePending || !state.mineral || !account.token) return;
+  savePending = false;
+  const m = state.mineral, snap = JSON.parse(JSON.stringify(state.answers));
+  try {
+    const r = await rpc("ahp_save_draft", { p_token: account.token, p_mineral: m, p_answers: snap,
+                                           p_started_at: new Date(state.startedAt).toISOString(), p_submission_id: state.submissionId }, { keepalive: true });
+    if (r.ok){ account.drafts[m] = { mineral: m, answers: snap, started_at: new Date(state.startedAt).toISOString(), submission_id: state.submissionId, updated_at: new Date().toISOString() };
+               showSave(`자동저장 ${hhmm()}`); }
+    else { showSave("저장 실패"); if (r.error === "invalid_session") logout(true), render(); }
+  } catch (e) {
+    showSave("저장 실패 (네트워크)");
+    savePending = true;                  // 다음 응답 때 재시도
+  }
+}
+window.addEventListener("beforeunload", () => { if (savePending) flushDraft(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && savePending) flushDraft(); });
+
+const loadDraft = m => account.drafts[m] || null;
+const isDone = m => !!account.done[m];
+function draftProgress(m){               // 임시저장본의 완료 단계 수
+  const d = loadDraft(m); if (!d) return 0;
+  const keep = state.answers; state.answers = Object.assign(blankAnswers(), d.answers); const n = doneCount(); state.answers = keep; return n;
+}
+function draftStarted(m){                // 임시저장본에 응답이 하나라도 있는가 (단계를 못 끝냈어도 "응답 중")
+  const d = loadDraft(m); if (!d) return false;
+  return Object.values(d.answers || {}).some(sec => Object.keys(sec || {}).length > 0);
+}
+const progressText = m => { const n = draftProgress(m); return n ? `응답 중 · ${n}/${N_STEPS}단계 완료` : draftStarted(m) ? "응답 중 · 1단계 진행" : "미응답"; };
+
+// 광물을 골라 설문 시작 (임시저장본이 있으면 이어서)
+function startMineral(name){
+  if (!mineralByName(name) || isDone(name) || !account.token) return;
+  if (state.mineral && state.mineral !== name && savePending) flushDraft();   // 하던 광물은 저장해 두고
+  state.mineral = name;
+  lastSaveText = "";
+  const d = loadDraft(name);
+  state.answers = d ? Object.assign(blankAnswers(), d.answers) : blankAnswers();
+  state.startedAt = d && d.started_at ? new Date(d.started_at).getTime() : Date.now();
+  state.submissionId = d && d.submission_id ? d.submission_id : newId();
+  state.step = firstIncomplete() || N_STEPS + 1;
   render();
   window.scrollTo({ top: 0, behavior: "smooth" });
-}
-function discardDraft(){ clearDraft(); $("#draftBanner").hidden = true; }
-function offerDraft(){
-  const d = loadDraft(); if (!d) return;
-  const n = SECTIONS.filter(sec => Object.keys(d.answers[sec.id] || {}).length).length;
-  if (!n) return;
-  const when = new Date(d.savedAt).toLocaleString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
-  const el = $("#draftBanner");
-  el.hidden = false;
-  el.innerHTML = `<b>임시저장된 응답이 있습니다</b> (${esc(when)}, ${n}개 단계 응답 중).
-    <button class="ghost small" onclick="restoreDraft()">이어서 응답</button>
-    <button class="ghost small" onclick="discardDraft()">새로 시작</button>`;
 }
 
 const $ = s => document.querySelector(s);
@@ -410,15 +613,40 @@ const firstIncomplete = () => SECTIONS.findIndex(sec => !sectionOK(sec)) + 1;
 
 // 단계 표시. 어느 단계든 눌러서 이동할 수 있고, 완료된 단계에는 ✓ 가 붙습니다.
 // 결과·제출은 모든 단계가 완료되어야 열립니다. 제출 후에는 이동할 수 없습니다.
+// 화면 상단에 고정되는 "현재 평가 광물" 띠
+function renderMineralBar(){
+  const el = $("#mineralBar"), m = mineralByName(state.mineral);
+  if (!m || state.step === 0){
+    // 안내 화면: 로그인 상태면 진행 상황 요약을 띠로 표시
+    if (state.step === 0 && account.token){
+      const list = LOCKED ? [LOCKED] : MINERALS;
+      const parts = list.map(x => isDone(x.name) ? `✓ ${x.name}` : draftStarted(x.name) ? `${x.name} 응답 중(${draftProgress(x.name)}/${N_STEPS})` : null).filter(Boolean);
+      const inProg = list.find(x => !isDone(x.name) && draftStarted(x.name));
+      el.hidden = false;
+      el.innerHTML = `<span class="lbl">${esc(account.name)} 님 진행 상황</span><span class="prog">${parts.length ? parts.map(esc).join(" · ") : "아직 응답한 광물이 없습니다"}</span>` +
+        (inProg ? `<button class="ghost small inv" onclick="startMineral('${esc(inProg.name)}')">${esc(inProg.name)} 이어서 응답 ›</button>` : "");
+      return;
+    }
+    el.hidden = true; return;
+  }
+  const idx = MINERALS.findIndex(x => x.name === m.name) + 1;
+  el.hidden = false;
+  el.innerHTML = `<span class="lbl">현재 평가 광물</span><span class="name">${esc(m.name)} <small>${esc(m.symbol)}</small></span>
+    <span class="save" id="saveState">${esc(lastSaveText || "자동저장 대기")}</span>
+    <span class="pos">${idx} / ${MINERALS.length}</span>
+    <button class="ghost small inv" onclick="logoutNow()">로그아웃</button>`;
+}
+
 function renderSteps(){
+  renderMineralBar();
   const chip = (i, label, enabled) => {
     const done = i >= 1 && i <= N_STEPS && sectionOK(SECTIONS[i - 1]);
     const cls = [i === state.step ? "active" : done ? "done" : "", enabled ? "link" : "off"].join(" ").trim();
-    const on = enabled ? ` onclick="go(${i})"` : ` title="모든 단계를 완료하면 열립니다"`;
+    const on = enabled ? ` onclick="go(${i})"` : ` title="${state.mineral ? "모든 단계를 완료하면 열립니다" : "먼저 평가할 광물을 선택하세요"}"`;
     return `<span class="${cls}"${on}>${done ? "✓ " : ""}${label}</span>`;
   };
-  const nav = !state.submitted;
-  let html = chip(0, "안내", nav);
+  const nav = !!state.mineral;                      // 광물을 고르기 전에는 안내만
+  let html = chip(0, "안내", true);
   let idx = 1;
   for (const t of CONFIG.trees){
     html += `<span class="sep">|</span>`;
@@ -506,8 +734,10 @@ function renderIntro(){
   <section class="card">
     <h2>설문 안내</h2>
     <p>본 설문은 계층분석법(AHP)을 이용하여 자원안보 진단·평가 지표의 가중치를 산정하기 위한 전문가 설문입니다.
-       지표는 <b>안정성</b>과 <b>대응력</b> 두 개의 독립된 체계로 구성되며, 두 체계 간 비교는 하지 않습니다.
-       각 체계 안에서 ① 평가영역 간, ② 영역별 세부지표 간 상대적 중요도를 쌍대비교 방식으로 여쭙습니다. 비교 쌍은 총 ${totalPairs}개(${N_STEPS}단계)입니다.</p>
+       평가 대상 광물은 <b>${MINERALS.map(m => m.name).join(" · ")}</b> ${MINERALS.length}종이며, 광물마다 같은 지표 체계로 설문을 한 번씩 합니다.
+       광물별 결과는 따로 제출되므로 한 번에 다 하지 않으셔도 됩니다.</p>
+    <p>지표는 <b>안정성</b>과 <b>대응력</b> 두 개의 독립된 체계로 구성되며, 두 체계 간 비교는 하지 않습니다.
+       각 체계 안에서 ① 평가영역 간, ② 영역별 세부지표 간 상대적 중요도를 쌍대비교 방식으로 여쭙습니다. 비교 쌍은 광물당 ${totalPairs}개(${N_STEPS}단계)입니다.</p>
     <p>문의: 에너지경제연구원 에너지안보정책연구실 박종은 부연구위원 (jongeun@keei.re.kr)</p>
     <h3>평가 계층구조</h3>
     ${CONFIG.trees.map(t => diagramHTML(t, { level: "all" })).join("")}
@@ -523,15 +753,59 @@ function renderIntro(){
     <p class="note">${N_STEPS}개 단계는 원하는 순서로 응답하셔도 됩니다. 상단의 단계 이름을 누르면 이동할 수 있고, 완료된 단계에는 ✓ 가 붙습니다.
        모든 단계를 완료하면 결과를 확인하고 제출할 수 있습니다.</p>
   </section>
-  <section class="card">
-    <h2>응답자 정보</h2>
-    <div class="fields">
-      <div><label for="affiliation">소속</label><input id="affiliation" type="text" value="${esc(r.affiliation || "")}" placeholder="예: ○○대학교" autocomplete="organization"></div>
-      <div><label for="name">이름</label><input id="name" type="text" value="${esc(r.name || "")}" placeholder="예: 홍길동" autocomplete="name"></div>
-    </div>
-    <div id="respMsg"></div>
-    <div class="nav"><span></span><button class="primary" onclick="go(1)">설문 시작</button></div>
+  ${authCardHTML()}`;
+}
+
+// 로그인 전: 등록/로그인 폼. 로그인 후: 응답자 표시 + 광물 선택
+function authCardHTML(){
+  if (!account.token){
+    return `<section class="card">
+      <h2>응답자 확인</h2>
+      <p>이름·소속과 비밀번호(숫자 4자리)를 입력하고 시작하세요. <b>처음이시면</b> 비밀번호를 직접 정해 입력하면 등록되고,
+         <b>이미 등록하셨으면</b> 등록 때 정한 비밀번호를 입력하면 하던 곳부터 이어집니다.</p>
+      <div class="fields">
+        <div><label for="name">이름</label><input id="name" type="text" placeholder="예: 홍길동" autocomplete="name"></div>
+        <div><label for="affiliation">소속</label><input id="affiliation" type="text" placeholder="예: ○○대학교" autocomplete="organization"></div>
+        <div><label for="password">비밀번호 (숫자 4자리)</label>
+             <input id="password" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="예: 1234" autocomplete="current-password"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)" onkeydown="if(event.key==='Enter'){enter()}"></div>
+      </div>
+      <div id="authMsg"></div>
+      <div class="nav"><span class="note">비밀번호를 잊으셨으면 설문 담당자에게 연락해 주세요.</span>
+        <button class="primary" onclick="enter()">시작 · 이어서 응답</button></div>
+    </section>`;
+  }
+  const notice = state.notice ? `<div class="cr-box warn slim" style="margin:0 0 12px">${esc(state.notice)}</div>` : "";
+  state.notice = "";
+  return `<section class="card">
+    ${notice}
+    <div class="who"><span><b>${esc(account.name)}</b> (${esc(account.affiliation)}) 님으로 로그인됨</span><button class="ghost small" onclick="logout()">로그아웃</button></div>
+    <h2>평가할 광물 선택</h2>
+    <p>광물을 누르면 그 광물에 대한 설문이 시작됩니다. 응답 중인 광물은 이어서 할 수 있고, 제출이 끝난 광물에는 ✓ 가 붙습니다.</p>
+    ${mineralCardsHTML()}
   </section>`;
+}
+
+function mineralCardsHTML(){
+  const list = LOCKED ? [LOCKED] : MINERALS;
+  const cards = list.map(m => {
+    const done = isDone(m.name), started = !done && draftStarted(m.name), cur = state.mineral === m.name;
+    const status = done ? "제출 완료" : progressText(m.name);
+    const action = done ? "" : started ? "이어서 응답" : "평가 시작";
+    const cls = ["mineral", done ? "done" : "", cur && !done ? "cur" : ""].join(" ").trim();
+    return `<button type="button" class="${cls}" ${done ? "disabled" : `onclick="startMineral('${esc(m.name)}')"`}>
+      <span class="sym">${esc(m.symbol)}</span>
+      <span class="nm">${done ? "✓ " : ""}${esc(m.name)}</span>
+      <span class="st">${status}</span>
+      ${action ? `<span class="go">${action} ›</span>` : ""}
+    </button>`;
+  }).join("");
+  const nDone = list.filter(m => isDone(m.name)).length;
+  const summary = nDone === list.length
+    ? `<div class="cr-box ok slim"><div class="cr-val">모든 광물(${list.length}종)의 평가가 제출되었습니다. 감사합니다.</div>
+         <p style="margin:10px 0 0"><button class="primary" onclick="printAllPDF(this)">전체 응답 PDF로 저장</button></p></div>`
+    : `<p class="note">${list.length}종 중 ${nDone}종 제출 완료</p>`;
+  return `<div class="minerals">${cards}</div>${summary}`;
 }
 
 function pairMsg(sec, i, j, a){
@@ -562,9 +836,10 @@ function pairHTML(sec, i, j){
 function renderSection(k){
   const sec = SECTIONS[k - 1];
   const pairs = pairsOf(sec.items.length);
+  const M = esc(state.mineral);
   const crumb = sec.level === "area"
-    ? `<b>${esc(sec.treeName)}</b> › 평가영역 비교`
-    : `<b>${esc(sec.treeName)}</b> › ${esc(sec.parent)} › 세부지표 비교`;
+    ? `<b>${M}</b> › ${esc(sec.treeName)} › 평가영역 비교`
+    : `<b>${M}</b> › ${esc(sec.treeName)} › ${esc(sec.parent)} › 세부지표 비교`;
   const tree = CONFIG.trees.find(t => t.id === sec.tree);
   const focus = sec.level === "area" ? { level: "area" } : { level: "item", area: sec.parent };
   // 그림 아래 정의: 영역 비교 단계는 영역 정의, 세부지표 비교 단계는 그 영역의 세부지표 정의
@@ -580,14 +855,13 @@ function renderSection(k){
   return `<section class="card">
     ${notice}
     <div class="crumb">${crumb}</div>
-    <h2>${k}단계. ${esc(sec.title)}</h2>
+    <h2><span class="mtag">${M}</span> ${k}단계. ${esc(sec.title)}</h2>
     ${diagramHTML(tree, focus)}
     ${defs}
-    <p>${esc(sec.desc)}</p>
+    <p>${esc(sec.desc.replace("{M}", state.mineral))}</p>
     <p class="note">총 ${pairs.length}개 쌍을 비교합니다. 왼쪽 항목이 더 중요하면 왼쪽 숫자를, 오른쪽 항목이 더 중요하면 오른쪽 숫자를 선택하세요.</p>
     <div id="pairs" class="pairs">${pairs.map(([i, j]) => pairHTML(sec, i, j)).join("")}</div>
     <div class="cr-box" id="crbox"></div>
-    <p class="note save" id="saveMsg">응답은 이 브라우저에 자동으로 임시저장됩니다. 같은 기기에서 다시 열면 이어서 응답할 수 있습니다.</p>
     <div class="nav">
       <button class="ghost" onclick="go(${k - 1})">이전</button>
       <button class="primary" onclick="go(${k + 1})">${k === N_STEPS ? "결과 확인" : "다음"}</button>
@@ -625,91 +899,134 @@ function renderResults(){
     let body = "";
     t.areas.forEach((a, k) => {
       const sec = secById(`${t.id}${k + 1}`), r = res[sec.id], aw = res[areaSec.id].w[k];
-      body += `<tr class="area-row"><td>${esc(a.name)}</td><td class="num">${pct(aw)}</td><td class="num">${pct(aw)}</td><td class="barcell"><div class="bar" style="width:${pct(aw)}"></div></td><td class="num">${r.CR.toFixed(3)}</td></tr>`;
+      body += `<tr class="area-row"><td>${esc(a.name)}</td><td class="num">${pct(aw)}</td><td class="num">${pct(aw)}</td><td class="barcell"><div class="bar" style="width:${pct(aw)}"></div></td><td class="num">${sec.items.length < 3 ? "–" : r.CR.toFixed(3)}</td></tr>`;
       rows.filter(x => x.tree === t.id && x.level === "item" && x.area === a.name).forEach(x => {
         body += `<tr><td class="sub">${esc(x.item)}</td><td class="num">${pct(x.local_w)}</td><td class="num">${pct(x.global_w)}</td><td class="barcell"><div class="bar g" style="width:${pct(x.global_w)}"></div></td><td></td></tr>`;
       });
     });
-    return `<section class="card"><h2>${esc(t.name)}</h2>
-      <table><thead><tr><th>평가영역 / 세부지표</th><th class="num">영역 내 가중치</th><th class="num">종합 가중치</th><th class="barcell"></th><th class="num">세부지표 CR</th></tr></thead><tbody>${body}</tbody></table>
+    return `<section class="card"><h2><span class="mtag">${esc(state.mineral)}</span> ${esc(t.name)}</h2>
+      <table><thead><tr><th>평가영역 / 세부지표</th><th class="num">영역 내 가중치</th><th class="num">종합 가중치</th><th class="barcell"></th><th class="num">세부지표 비교 CR</th></tr></thead><tbody>${body}</tbody></table>
       <div class="cr-box ${crCls(res[areaSec.id].CR)} slim"><div class="cr-val">평가영역 비교 CR = ${res[areaSec.id].CR.toFixed(3)}</div>
         <div class="cr-msg">종합 가중치 = 평가영역 가중치 × 영역 내 세부지표 가중치. ${esc(t.name)} 체계 안에서 세부지표 종합 가중치의 합은 100%입니다.</div></div>
       </section>`;
   }).join("");
-  const testNote = isTestMode() ? `<p class="note">테스트 모드: Supabase 설정이 비어 있어 응답이 전송되지 않습니다. 제출을 누르면 전송될 데이터가 화면에 표시됩니다.</p>` : "";
+  const testNote = isTestMode() ? `<p class="note">테스트 모드: Supabase 설정이 비어 있어 제출이 이 브라우저 안에만 기록됩니다.</p>` : "";
   return `${blocks}
   <section class="card">
-    <h2>제출</h2>
-    <p>위 가중치는 응답하신 쌍대비교로부터 산출된 값입니다. 확인 후 제출해 주세요.
-       제출 전에 <b>PDF로 저장</b>을 눌러 응답 내용을 보관해 두실 수 있습니다.</p>
+    <h2><span class="mtag">${esc(state.mineral)}</span> 제출</h2>
+    <p>위 가중치는 <b>${esc(state.mineral)}</b>에 대해 응답하신 쌍대비교로부터 산출된 값입니다. 확인 후 제출해 주세요.
+       모든 광물의 평가를 마치면 전체 응답을 PDF 한 부로 저장할 수 있습니다.</p>
     ${testNote}
     <div class="nav">
       <button class="ghost" onclick="go(${N_STEPS})">이전</button>
-      <span>
-        <button class="ghost" onclick="printPDF()">PDF로 저장</button>
-        <button class="primary" id="submitBtn" onclick="submitAll()">제출</button>
-      </span>
+      <button class="primary" id="submitBtn" onclick="submitAll()">제출</button>
     </div>
     <div id="submitMsg"></div>
-  </section>
-  ${printSheetHTML(res)}`;
+  </section>`;
 }
 
-// 인쇄(PDF)용 응답 요약: 화면에는 보이지 않고 인쇄할 때만 나타남
-function printSheetHTML(res){
-  const r = state.respondent, pct = x => (x * 100).toFixed(1) + "%";
+// ---- 전체 응답 PDF (모든 광물 제출 후) ----
+// 서버에서 본인이 제출한 응답을 모두 받아 한 문서로 만듭니다: 요약표(지표 × 광물) + 광물별 가중치·쌍대비교
+const allMineralsDone = () => (LOCKED ? [LOCKED] : MINERALS).every(x => isDone(x.name));
+
+function printAllHTML(data){
+  const pct = x => (x * 100).toFixed(1) + "%";
+  const list = (LOCKED ? [LOCKED] : MINERALS).map(x => x.name);
+  const byM = {}; (data.responses || []).forEach(r => byM[r.mineral] = r);
+  const present = list.filter(m => byM[m]);
+  const wOf = (r, tree, level, area, item) => (r.weights || []).find(w => w.tree === tree && w.level === level && w.area === area && w.item === item);
   const when = new Date().toLocaleString("ko-KR");
   let html = `<div class="print-sheet">
     <h1>${esc(CONFIG.title)}</h1>
     <p>${esc(CONFIG.organization)}</p>
-    <table class="meta"><tr><td>소속</td><td>${esc(r.affiliation || "")}</td><td>이름</td><td>${esc(r.name || "")}</td></tr></table>`;
+    <table class="meta"><tr><td>소속</td><td>${esc(data.affiliation || "")}</td><td>이름</td><td>${esc(data.name || "")}</td></tr>
+    <tr><td>평가 광물</td><td>${present.map(esc).join(" · ")} (${present.length}종)</td><td>출력 시각</td><td>${esc(when)}</td></tr></table>`;
+
+  // 1) 요약: 지표 × 광물 종합 가중치
+  html += `<h2>요약: 광물별 종합 가중치</h2>`;
   for (const t of CONFIG.trees){
-    const areaSec = secById(t.id + "0"), ar = res[areaSec.id];
-    html += `<h2>${esc(t.name)}: 가중치</h2>
-      <table><thead><tr><th>평가영역 / 세부지표</th><th class="num">영역 내</th><th class="num">종합</th><th class="num">CR</th></tr></thead><tbody>`;
-    t.areas.forEach((a, k) => {
-      const sec = secById(`${t.id}${k + 1}`), rr = res[sec.id], aw = ar.w[k];
-      html += `<tr class="area-row"><td>${esc(a.name)}</td><td class="num">${pct(aw)}</td><td class="num">${pct(aw)}</td><td class="num">${k === 0 ? ar.CR.toFixed(3) : ""}</td></tr>`;
-      sec.items.forEach((it, i) => html += `<tr><td class="sub">${esc(it)}</td><td class="num">${pct(rr.w[i])}</td><td class="num">${pct(aw * rr.w[i])}</td><td class="num">${i === 0 ? rr.CR.toFixed(3) : ""}</td></tr>`);
-    });
+    html += `<table class="wide"><thead><tr><th>${esc(t.name)} 평가영역 / 세부지표</th>${present.map(m => `<th class="num">${esc(m)}</th>`).join("")}</tr></thead><tbody>`;
+    for (const a of t.areas){
+      html += `<tr class="area-row"><td>${esc(a.name)}</td>${present.map(m => { const w = wOf(byM[m], t.id, "area", a.name, a.name); return `<td class="num">${w ? pct(w.global_w) : "–"}</td>`; }).join("")}</tr>`;
+      for (const it of a.items)
+        html += `<tr><td class="sub">${esc(it)}</td>${present.map(m => { const w = wOf(byM[m], t.id, "item", a.name, it); return `<td class="num">${w ? pct(w.global_w) : "–"}</td>`; }).join("")}</tr>`;
+    }
     html += `</tbody></table>`;
   }
-  html += `<h2>쌍대비교 응답</h2><table><thead><tr><th>단계</th><th>왼쪽 항목</th><th class="num">선택</th><th>오른쪽 항목</th></tr></thead><tbody>`;
-  for (const sec of SECTIONS){
-    for (const [i, j] of pairsOf(sec.items.length)){
-      const a = state.answers[sec.id][i + "-" + j]; if (!a) continue;
-      const choice = a.side === "E" ? "1 (동등)" : a.side === "L" ? `◀ ${a.val}` : `${a.val} ▶`;
-      html += `<tr><td>${esc(sec.short)}</td><td>${esc(sec.items[i])}</td><td class="num">${choice}</td><td>${esc(sec.items[j])}</td></tr>`;
+  html += `<p class="note">종합 가중치 = 평가영역 가중치 × 영역 내 세부지표 가중치. 각 광물·각 체계(안정성/대응력) 안에서 세부지표 종합 가중치의 합은 100%입니다.</p>`;
+
+  // 2) 광물별 상세: 가중치 + 쌍대비교
+  for (const m of present){
+    const r = byM[m], cr = r.cr || {};
+    html += `<div class="mblock"><h2>${esc(m)}</h2>`;
+    const crTxt = (id, n) => n < 3 ? "–" : (cr[id] != null ? Number(cr[id]).toFixed(3) : "");
+    for (const t of CONFIG.trees){
+      html += `<table><thead><tr><th>${esc(t.name)} 평가영역 / 세부지표</th><th class="num">영역 내 가중치</th><th class="num">종합 가중치</th><th class="num">세부지표 비교 CR</th></tr></thead><tbody>`;
+      t.areas.forEach((a, k) => {
+        const aw = wOf(r, t.id, "area", a.name, a.name);
+        html += `<tr class="area-row"><td>${esc(a.name)}</td><td class="num">${aw ? pct(aw.local_w) : "–"}</td><td class="num">${aw ? pct(aw.global_w) : "–"}</td><td class="num">${crTxt(t.id + (k + 1), a.items.length)}</td></tr>`;
+        a.items.forEach(it => { const w = wOf(r, t.id, "item", a.name, it);
+          html += `<tr><td class="sub">${esc(it)}</td><td class="num">${w ? pct(w.local_w) : "–"}</td><td class="num">${w ? pct(w.global_w) : "–"}</td><td class="num"></td></tr>`; });
+      });
+      html += `</tbody></table><p class="crline">${esc(t.name)} 평가영역 비교 CR = ${crTxt(t.id + "0", t.areas.length)}</p>`;
     }
+    html += `<h3>${esc(m)}: 쌍대비교 응답</h3><table><thead><tr><th>단계</th><th>왼쪽 항목</th><th class="num">선택</th><th>오른쪽 항목</th></tr></thead><tbody>`;
+    for (const j of (r.judgments || [])){
+      const c = String(j.choice || ""); const choice = c === "1" ? "1 (동등)" : c[0] === "L" ? `◀ ${c.slice(1)}` : c[0] === "R" ? `${c.slice(1)} ▶` : c;
+      html += `<tr><td>${esc(j.section || j.section_id || "")}</td><td>${esc(j.left_item)}</td><td class="num">${esc(choice)}</td><td>${esc(j.right_item)}</td></tr>`;
+    }
+    html += `</tbody></table></div>`;
   }
-  html += `</tbody></table>
-    <p class="note">◀ n: 왼쪽 항목이 n만큼 더 중요 / n ▶: 오른쪽 항목이 n만큼 더 중요. 이 문서는 응답자 보관용이며, 제출이 되지 않은 경우 설문 담당자에게 보내 주시면 됩니다.</p>
-  </div>`;
+  html += `<p class="note">◀ n: 왼쪽 항목이 n만큼 더 중요 / n ▶: 오른쪽 항목이 n만큼 더 중요.
+    CR(일관성 비율)은 지표 하나가 아니라 비교 단계 하나(영역 비교, 또는 한 영역의 세부지표 비교)에 대해 계산되며, 항목이 2개인 영역은 계산 대상이 아닙니다(–). 이 문서는 응답자 보관용입니다.</p></div>`;
   return html;
 }
 
-function printPDF(){
-  document.title = `AHP응답_${(state.respondent.name || "응답자")}_${state.submissionId}`;
-  window.print();
-  setTimeout(() => document.title = CONFIG.title, 1000);
+async function printAllPDF(btn){
+  if (!account.token) return;
+  if (btn){ btn.disabled = true; btn.textContent = "응답을 불러오는 중…"; }
+  try {
+    const data = await rpc("ahp_my_responses", { p_token: account.token });
+    if (!data.ok) throw new Error(errText(data.error));
+    let box = document.getElementById("printAll");
+    if (!box){ box = document.createElement("div"); box.id = "printAll"; document.body.appendChild(box); }
+    box.innerHTML = printAllHTML(data);
+    document.title = `AHP응답_전체_${(account.name || "응답자")}`;
+    window.print();
+    setTimeout(() => { document.title = CONFIG.title; }, 1000);
+  } catch (e) {
+    alert("응답을 불러오지 못했습니다: " + (e.message || e));
+  } finally {
+    if (btn){ btn.disabled = false; btn.textContent = "전체 응답 PDF로 저장"; }
+  }
 }
 
 function renderDone(res){
-  const { res: r2 } = computeAll();
+  const m = state.mineral;
+  account.done[m] = { mineral: m, submission_id: state.submissionId, submitted_at: new Date().toISOString() };
+  delete account.drafts[m];
+  const list = LOCKED ? [LOCKED] : MINERALS;
+  const remaining = list.filter(x => !isDone(x.name) && x.name !== m);
+  const next = remaining.length
+    ? `<h3>다음 광물 평가</h3>
+       <p>아직 평가하지 않은 광물: <b>${remaining.map(x => esc(x.name)).join(" · ")}</b>. 지금 이어서 하셔도 되고, 나중에 같은 링크로 다시 오셔도 됩니다.</p>
+       <div class="minerals">${remaining.map(x => `<button type="button" class="mineral" onclick="startMineral('${esc(x.name)}')">
+         <span class="sym">${esc(x.symbol)}</span><span class="nm">${esc(x.name)}</span><span class="st">${progressText(x.name)}</span><span class="go">${draftStarted(x.name) ? "이어서 응답" : "평가 시작"} ›</span></button>`).join("")}</div>`
+    : `<div class="cr-box ok slim"><div class="cr-val">모든 광물(${list.length}종)의 평가가 제출되었습니다.</div>
+         <div class="cr-msg">설문에 참여해 주셔서 감사합니다. 아래 버튼으로 전체 응답(요약표 + 광물별 가중치·쌍대비교)을 PDF 한 부로 저장해 두실 수 있습니다.
+           나중에 같은 링크로 로그인해서 받으셔도 됩니다.</div>
+         <p style="margin:10px 0 0"><button class="primary" onclick="printAllPDF(this)">전체 응답 PDF로 저장</button></p></div>`;
   $("#main").innerHTML = `<section class="card">
-    <h2>${res.test ? "테스트 완료" : "제출 완료"}</h2>
-    <p>${res.test
-      ? "테스트 모드이므로 실제 전송은 하지 않았습니다. 아래는 Supabase 테이블에 한 행으로 기록될 데이터입니다."
-      : "응답해 주셔서 감사합니다. 응답이 정상적으로 기록되었습니다."}</p>
+    <h2><span class="mtag">${esc(m)}</span> ${res.test ? "테스트 완료" : "제출 완료"}</h2>
+    <p><b>${esc(m)}</b>에 대한 응답이 정상적으로 기록되었습니다.${res.test ? " (테스트 모드: 이 브라우저 안에만 기록)" : ""}</p>
     ${res.duplicate ? `<p class="note">이미 기록된 응답이라 중복 저장하지 않았습니다.</p>` : ""}
-    <p><button class="ghost" onclick="printPDF()">응답 내용 PDF로 저장</button></p>
-    ${res.test ? `<pre class="json">${esc(JSON.stringify(res.payload, null, 2))}</pre>
-                  <button class="ghost" onclick="downloadJSON()">JSON 내려받기</button>` : ""}
-  </section>${printSheetHTML(r2)}`;
+    ${next}
+  </section>`;
   state.step = N_STEPS + 2;
-  state.submitted = true;
-  if (!res.test) clearDraft();
+  state.mineral = null; state.answers = blankAnswers();   // 다음 광물을 고르기 전까지 단계 이동 잠금
   renderSteps();
+  $("#mineralBar").hidden = true;
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function render(){
@@ -723,24 +1040,11 @@ function render(){
 /* =====================================================================
  *  상호작용
  * ===================================================================== */
-function readRespondent(){
-  const g = id => document.getElementById(id);
-  if (!g("affiliation")) return true;
-  state.respondent = { affiliation: g("affiliation").value.trim(), name: g("name").value.trim() };
-  const missing = [!state.respondent.affiliation && "소속", !state.respondent.name && "이름"].filter(Boolean);
-  const msg = g("respMsg");
-  if (missing.length){
-    msg.innerHTML = `<div class="cr-box err slim"><div class="cr-msg">${missing.join("과 ")}을(를) 입력해 주세요.</div></div>`;
-    g(missing[0] === "소속" ? "affiliation" : "name").focus();
-    return false;
-  }
-  msg.innerHTML = "";
-  saveDraft();
-  return true;
-}
+function readRespondent(){ return !!account.token; }
 
 function go(step){
-  if (state.submitted) return;
+  if (savePending) flushDraft();                                          // 단계를 옮기기 전에 저장
+  if (step > 0 && !state.mineral){ state.step = 0; render(); return; }   // 광물을 먼저 선택
   if (state.step === 0 && step > 0 && !readRespondent()) return;
   if (step > N_STEPS && !allDone()){                   // 결과·제출은 모든 단계 완료 후에만
     const left = N_STEPS - doneCount();
@@ -839,15 +1143,14 @@ async function readDetail(res){
 }
 
 // 점검 주소: 응답 테이블 자체. (/rest/v1/ 루트는 publishable 키로 열 수 없음)
-function probeUrl(){ return restUrl() + CONFIG.table + "?select=submission_id&limit=1"; }
+function probeUrl(){ return restUrl() + "rpc/ahp_login"; }
 
 async function probe(mode){
-  const res = await fetch(keyedUrl(probeUrl(), mode), { headers: keyedHeaders(mode) });
+  // 빈 이름·비밀번호로 로그인 함수를 불러 봄: {"ok":false,"error":"bad_credentials"} 가 오면 키·주소·함수 모두 정상
+  const res = await fetch(keyedUrl(probeUrl(), mode), { method: "POST", headers: keyedHeaders(mode, { "Content-Type": "application/json" }), body: JSON.stringify({ p_name: "", p_password: "" }) });
   if (res.ok) return { ok: true, status: res.status, detail: "" };
   const detail = await readDetail(res);
-  // 익명 키는 삽입만 허용되어 조회는 거부되지만, 이 거부는 데이터베이스까지 도달했다는 뜻 → 키·주소·네트워크 모두 정상
-  if ((res.status === 401 || res.status === 403) && /permission denied|42501/i.test(detail))
-    return { ok: true, status: res.status, detail };
+  if (res.status === 404 && /ahp_login/.test(detail)) return { ok: false, status: res.status, detail: "서버에 로그인 함수가 없습니다. supabase_update_all.sql 을 실행해 주세요." };
   return { ok: false, status: res.status, detail };
 }
 
@@ -875,7 +1178,7 @@ async function checkConnection(){
     <a href="${esc(withKey(probeUrl()))}" target="_blank" rel="noopener">이 링크</a>를 새 탭에서 열었을 때
     “permission denied for table …”이 보이면 키는 정상이고 네트워크 문제이며, “Invalid API key”가 보이면
     프로젝트 <code>${esc(baseUrl().replace(/^https?:\/\//, "").split(".")[0])}</code>의 Settings → API Keys에서 키를 다시 확인해야 합니다.
-    “Could not find the table”이 보이면 supabase.sql이 이 프로젝트에서 실행되지 않은 것입니다.`;
+    “Could not find the function”이 보이면 supabase_update4.sql이 이 프로젝트에서 실행되지 않은 것입니다.`;
 }
 
 function buildPayload(){
@@ -892,11 +1195,11 @@ function buildPayload(){
   }
   return {
     submission_id: state.submissionId,
+    mineral: state.mineral,
     submitted_at: new Date().toISOString(),
     affiliation: state.respondent.affiliation || "",
     name: state.respondent.name || "",
     duration_sec: Math.round((Date.now() - state.startedAt) / 1000),
-    user_agent: navigator.userAgent,
     scale: SCALE.join(","),
     cr,
     weights: rows.map(x => ({ ...x, local_w: round(x.local_w, 5), global_w: round(x.global_w, 5), cr: round(x.cr, 4) })),
@@ -905,36 +1208,16 @@ function buildPayload(){
   };
 }
 
-async function postRow(row, mode){
-  const url = keyedUrl(restUrl() + CONFIG.table, mode);
-  const res = await fetch(url, {
-    method: "POST",
-    headers: keyedHeaders(mode, { "Content-Type": "application/json", "Prefer": "return=minimal" }),
-    body: JSON.stringify(row)
-  });
-  if (res.ok) return { ok: true, mode };
-  if (res.status === 409) return { ok: true, duplicate: true, mode };   // 같은 submission_id 재전송
-  const detail = await readDetail(res);
-  const hint = res.status === 401 || res.status === 403 ? " (키 또는 삽입 권한 정책 문제)"
-             : res.status === 404 ? " (주소 또는 테이블 이름 문제)" : "";
-  return { ok: false, status: res.status, error: `HTTP ${res.status} ${detail}${hint}` };
-}
-
 async function sendToSupabase(row){
-  // 사전 점검에서 정해진 방식을 먼저 쓰고, 키 거부(401/403)면 다른 방식으로 한 번 더 시도
-  const modes = state.keyMode === "query" ? ["query", "header"] : ["header", "query"];
-  let last = null;
-  for (const mode of modes){
-    try {
-      const r = await postRow(row, mode);
-      if (r.ok){ state.keyMode = mode; return r; }
-      last = r;
-      if (!(r.status === 401 || r.status === 403)) break;   // 키 문제가 아니면 재시도 의미 없음
-    } catch (e) {
-      return { ok: false, error: `${e.message || e}: 요청 주소: ${restUrl() + CONFIG.table}. 주소가 열리지 않거나 네트워크가 차단된 상태입니다.` };
-    }
+  if (!account.token) return { ok: false, error: "로그인이 필요합니다. 안내 화면에서 다시 로그인해 주세요." };
+  try {
+    const r = await rpc("ahp_submit", { p_token: account.token, p_row: row });
+    if (r.ok) return r;
+    if (r.error === "invalid_session"){ logout(true); return { ok: false, error: errText(r.error) }; }
+    return { ok: false, error: errText(r.error) };
+  } catch (e) {
+    return { ok: false, error: `${e.message || e}. 주소가 열리지 않거나 네트워크가 차단된 상태입니다.` };
   }
-  return last;
 }
 
 async function submitAll(){
@@ -942,7 +1225,7 @@ async function submitAll(){
   btn.disabled = true; btn.textContent = "전송 중…";
   const payload = buildPayload();
   state.lastPayload = payload;
-  if (isTestMode()){ renderDone({ ok: true, test: true, payload }); return; }
+  clearTimeout(saveTimer); savePending = false;
   const res = await sendToSupabase(payload);
   if (res.ok){ renderDone({ ...res, payload }); return; }
   btn.disabled = false; btn.textContent = "다시 제출";
@@ -956,7 +1239,7 @@ function downloadJSON(){
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `ahp_${payload.submission_id}.json`;
+  a.download = `ahp_${payload.mineral || ""}_${payload.submission_id}.json`;
   a.click();
 }
 
@@ -967,8 +1250,8 @@ $("#org").textContent = CONFIG.organization;
 $("#title").textContent = CONFIG.title;
 $("#testBanner").hidden = !isTestMode();
 render();
-offerDraft();
 checkConnection();
+autoLogin();
 </script>
 </body>
 </html>
